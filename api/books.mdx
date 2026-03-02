@@ -1,0 +1,432 @@
+---
+title: 'Books'
+description: 'Search, retrieve, and refresh book information from Hardcover'
+---
+
+## Search Books
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Search for books by title, author, or keywords.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/book/search?query=dune" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/book/search?query=dune', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.trackgeek.com/book/search',
+    params={'query': 'dune'},
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="query" type="string" required>
+  Search query string. Must be at least 3 characters long.
+</ParamField>
+
+### Response
+
+<ResponseField name="books" type="array">
+  Array of book objects matching the search query.
+  
+  <Expandable title="book object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="hardcoverId" type="number">
+      Hardcover API ID
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Book title
+    </ResponseField>
+    
+    <ResponseField name="subtitle" type="string">
+      Book subtitle
+    </ResponseField>
+    
+    <ResponseField name="slug" type="string">
+      URL-friendly slug
+    </ResponseField>
+    
+    <ResponseField name="imageUrl" type="object">
+      Cover image URLs in various sizes
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Book description/synopsis
+    </ResponseField>
+    
+    <ResponseField name="releaseDate" type="string">
+      Publication date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="releaseYear" type="number">
+      Publication year
+    </ResponseField>
+    
+    <ResponseField name="numberOfPages" type="number">
+      Total number of pages
+    </ResponseField>
+    
+    <ResponseField name="literaryTypeId" type="number">
+      Literary type identifier
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "books": [
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440005",
+      "hardcoverId": 123456,
+      "title": "Dune",
+      "subtitle": null,
+      "slug": "dune",
+      "imageUrl": {
+        "small": "https://hardcover.app/covers/small/dune.jpg",
+        "medium": "https://hardcover.app/covers/medium/dune.jpg",
+        "large": "https://hardcover.app/covers/large/dune.jpg"
+      },
+      "description": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides...",
+      "releaseDate": "1965-06-01T00:00:00.000Z",
+      "releaseYear": 1965,
+      "numberOfPages": 688,
+      "literaryTypeId": 1
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+---
+
+## Get Book Details
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Retrieve detailed information about a specific book by its ID.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/book/details/123456" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const bookId = 123456;
+const response = await fetch(`https://api.trackgeek.com/book/details/${bookId}`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+book_id = 123456
+response = requests.get(
+    f'https://api.trackgeek.com/book/details/{book_id}',
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="bookId" type="integer" required>
+  The unique book identifier. Must be a valid integer.
+</ParamField>
+
+### Response
+
+<ResponseField name="book" type="object">
+  Detailed book information.
+  
+  <Expandable title="book object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="hardcoverId" type="number">
+      Hardcover API ID
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Book title
+    </ResponseField>
+    
+    <ResponseField name="subtitle" type="string">
+      Book subtitle
+    </ResponseField>
+    
+    <ResponseField name="alternativeTitles" type="array">
+      Alternative titles in different languages or editions
+    </ResponseField>
+    
+    <ResponseField name="slug" type="string">
+      URL-friendly slug
+    </ResponseField>
+    
+    <ResponseField name="imageUrl" type="object">
+      Cover image URLs in various sizes
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Full book description/synopsis
+    </ResponseField>
+    
+    <ResponseField name="headline" type="string">
+      Short headline or tagline
+    </ResponseField>
+    
+    <ResponseField name="releaseDate" type="string">
+      Publication date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="releaseYear" type="number">
+      Publication year
+    </ResponseField>
+    
+    <ResponseField name="numberOfPages" type="number">
+      Total number of pages
+    </ResponseField>
+    
+    <ResponseField name="audioSeconds" type="number">
+      Audiobook duration in seconds
+    </ResponseField>
+    
+    <ResponseField name="literaryTypeId" type="number">
+      Literary type identifier (1=Novel, 2=Novella, etc.)
+    </ResponseField>
+    
+    <ResponseField name="bookCategoryId" type="number">
+      Book category identifier
+    </ResponseField>
+    
+    <ResponseField name="bookStatus" type="object">
+      Book publication status
+    </ResponseField>
+    
+    <ResponseField name="state" type="string">
+      Current state (published, draft, etc.)
+    </ResponseField>
+    
+    <ResponseField name="compilation" type="boolean">
+      Whether this is a compilation
+    </ResponseField>
+    
+    <ResponseField name="curationStatus" type="number">
+      Curation status code
+    </ResponseField>
+    
+    <ResponseField name="canonical" type="object">
+      Canonical book reference if this is a variant
+    </ResponseField>
+    
+    <ResponseField name="editions" type="array">
+      Array of edition objects (paperback, hardcover, ebook, etc.)
+    </ResponseField>
+    
+    <ResponseField name="editionsCount" type="number">
+      Total number of editions
+    </ResponseField>
+    
+    <ResponseField name="defaultPhysicalEdition" type="object">
+      Default physical edition information
+    </ResponseField>
+    
+    <ResponseField name="defaultEbookEdition" type="object">
+      Default ebook edition information
+    </ResponseField>
+    
+    <ResponseField name="defaultAudioEdition" type="object">
+      Default audiobook edition information
+    </ResponseField>
+    
+    <ResponseField name="defaultCoverEdition" type="object">
+      Default cover edition information
+    </ResponseField>
+    
+    <ResponseField name="featuredBookSeries" type="object">
+      Series information if part of a series
+    </ResponseField>
+    
+    <ResponseField name="links" type="array">
+      External links (Amazon, Goodreads, etc.)
+    </ResponseField>
+    
+    <ResponseField name="lastRefreshedAt" type="string">
+      ISO 8601 timestamp of last data refresh
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "book": {
+    "id": "aa0e8400-e29b-41d4-a716-446655440005",
+    "hardcoverId": 123456,
+    "title": "Dune",
+    "subtitle": null,
+    "slug": "dune",
+    "imageUrl": {
+      "small": "https://hardcover.app/covers/small/dune.jpg",
+      "medium": "https://hardcover.app/covers/medium/dune.jpg",
+      "large": "https://hardcover.app/covers/large/dune.jpg"
+    },
+    "description": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides...",
+    "releaseDate": "1965-06-01T00:00:00.000Z",
+    "releaseYear": 1965,
+    "numberOfPages": 688,
+    "audioSeconds": 75600,
+    "literaryTypeId": 1,
+    "bookCategoryId": 2,
+    "state": "published",
+    "compilation": false,
+    "editions": [
+      {
+        "format": "Hardcover",
+        "isbn": "9780441172719",
+        "pages": 688
+      },
+      {
+        "format": "Paperback",
+        "isbn": "9780441013593",
+        "pages": 896
+      }
+    ],
+    "editionsCount": 125,
+    "featuredBookSeries": {
+      "seriesName": "Dune Chronicles",
+      "position": 1
+    },
+    "links": [
+      { "type": "amazon", "url": "https://amazon.com/dp/0441172717" },
+      { "type": "goodreads", "url": "https://goodreads.com/book/show/234225" }
+    ],
+    "lastRefreshedAt": "2026-03-02T10:00:00.000Z",
+    "createdAt": "2026-01-15T08:30:00.000Z",
+    "updatedAt": "2026-03-02T10:00:00.000Z"
+  }
+}
+```
+
+</ResponseExample>
+
+---
+
+## Refresh Book
+
+<Note>
+  This endpoint requires authentication. Include your API token in the Authorization header.
+</Note>
+
+Refresh book data from Hardcover to get the latest information.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.trackgeek.com/book/refresh" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 123456
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/book/refresh', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: 123456
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.trackgeek.com/book/refresh',
+    headers={
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={'id': 123456}
+)
+```
+
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="id" type="integer" required>
+  The Hardcover ID of the book to refresh. Must be a valid integer.
+</ParamField>
+
+### Response
+
+Returns HTTP 200 on successful refresh with no body content.
+
+<ResponseExample>
+
+```json Success Response
+{}
+```
+
+</ResponseExample>

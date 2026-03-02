@@ -1,0 +1,275 @@
+---
+title: 'Progress Tracking'
+description: 'Track your progress for anime, manga, TV shows, movies, games, and books'
+---
+
+<Note>
+Progress tracking allows you to mark your status for any media type. Use these endpoints to create, update, and retrieve progress information.
+</Note>
+
+## Progress Status Values
+
+All progress endpoints use the `ProgressStatus` enum:
+
+- `Watching` - Currently watching (anime/TV shows)
+- `Playing` - Currently playing (games)
+- `Reading` - Currently reading (manga/books)
+- `Completed` - Finished the content
+- `Paused` - Temporarily stopped
+- `Dropped` - Abandoned
+- `Planning` - Intend to start
+
+---
+
+## Anime Progress
+
+### Create/Update Anime Progress
+
+<Note>
+This endpoint creates a new progress entry or updates an existing one for the authenticated user and anime.
+</Note>
+
+```bash POST /api/anime/progress
+curl -X POST https://api.trackgeek.com/anime/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "animeId": "anime-uuid-here",
+    "status": "Watching"
+  }'
+```
+
+<ParamField body="animeId" type="string" required>
+  The UUID of the anime
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Watching`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+<ResponseField name="id" type="string">
+  Progress entry UUID
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current progress status
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  User UUID
+</ResponseField>
+
+<ResponseField name="animeId" type="string">
+  Anime UUID
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp
+</ResponseField>
+
+### Get Anime Progress
+
+```bash GET /api/anime/progress
+curl https://api.trackgeek.com/anime/progress?animeId=anime-uuid-here&userId=user-uuid-here
+```
+
+<ParamField query="animeId" type="string">
+  Filter by anime UUID
+</ParamField>
+
+<ParamField query="userId" type="string">
+  Filter by user UUID
+</ParamField>
+
+<ParamField query="offset" type="number">
+  Pagination offset (default: 0)
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page (default: 20)
+</ParamField>
+
+---
+
+## Manga Progress
+
+### Create/Update Manga Progress
+
+```bash POST /api/manga/progress
+curl -X POST https://api.trackgeek.com/manga/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mangaId": "manga-uuid-here",
+    "status": "Reading"
+  }'
+```
+
+<ParamField body="mangaId" type="string" required>
+  The UUID of the manga
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Reading`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+### Get Manga Progress
+
+```bash GET /api/manga/progress
+curl https://api.trackgeek.com/manga/progress?mangaId=manga-uuid-here
+```
+
+---
+
+## TV Show Progress
+
+### Create/Update TV Show Progress
+
+```bash POST /api/tv/progress
+curl -X POST https://api.trackgeek.com/tv/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tvShowId": "tvshow-uuid-here",
+    "status": "Watching"
+  }'
+```
+
+<ParamField body="tvShowId" type="string" required>
+  The UUID of the TV show
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Watching`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+### Get TV Show Progress
+
+```bash GET /api/tv/progress
+curl https://api.trackgeek.com/tv/progress?tvShowId=tvshow-uuid-here
+```
+
+---
+
+## Movie Progress
+
+### Create/Update Movie Progress
+
+```bash POST /api/movie/progress
+curl -X POST https://api.trackgeek.com/movie/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "movieId": "movie-uuid-here",
+    "status": "Watching"
+  }'
+```
+
+<ParamField body="movieId" type="string" required>
+  The UUID of the movie
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Watching`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+### Get Movie Progress
+
+```bash GET /api/movie/progress
+curl https://api.trackgeek.com/movie/progress?movieId=movie-uuid-here
+```
+
+---
+
+## Game Progress
+
+### Create/Update Game Progress
+
+```bash POST /api/game/progress
+curl -X POST https://api.trackgeek.com/game/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gameId": "game-uuid-here",
+    "status": "Playing"
+  }'
+```
+
+<ParamField body="gameId" type="string" required>
+  The UUID of the game
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Playing`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+### Get Game Progress
+
+```bash GET /api/game/progress
+curl https://api.trackgeek.com/game/progress?gameId=game-uuid-here
+```
+
+---
+
+## Book Progress
+
+### Create/Update Book Progress
+
+```bash POST /api/book/progress
+curl -X POST https://api.trackgeek.com/book/progress \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bookId": "book-uuid-here",
+    "status": "Reading"
+  }'
+```
+
+<ParamField body="bookId" type="string" required>
+  The UUID of the book
+</ParamField>
+
+<ParamField body="status" type="ProgressStatus" required>
+  Progress status: `Reading`, `Completed`, `Paused`, `Dropped`, or `Planning`
+</ParamField>
+
+### Get Book Progress
+
+```bash GET /api/book/progress
+curl https://api.trackgeek.com/book/progress?bookId=book-uuid-here
+```
+
+---
+
+## Delete Progress
+
+<Warning>
+Deleting progress is permanent and cannot be undone.
+</Warning>
+
+Each media type has a DELETE endpoint:
+
+```bash DELETE /api/{media-type}/progress/{progressId}
+curl -X DELETE https://api.trackgeek.com/anime/progress/{progressId} \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+Replace `{media-type}` with: `anime`, `manga`, `tv`, `movie`, `game`, or `book`.
+
+<ParamField path="progressId" type="string" required>
+  The UUID of the progress entry to delete
+</ParamField>
+
+## Authentication
+
+All POST, PATCH, and DELETE endpoints require authentication via Bearer token in the Authorization header.
+
+## Constraints
+
+- Each user can only have one progress entry per media item
+- Progress entries are automatically created or updated (upsert behavior)
+- Valid status values depend on the media type (e.g., use "Playing" for games, "Watching" for anime)

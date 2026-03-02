@@ -1,0 +1,327 @@
+---
+title: 'Error Handling'
+description: 'Understanding error responses, error codes, and how to handle exceptions in the TrackGeek API'
+---
+
+## Overview
+
+The TrackGeek API uses a centralized error handling system that provides consistent, structured error responses across all endpoints. All errors follow a standard format with error codes and HTTP status codes.
+
+## Error Response Format
+
+All API errors return a JSON response with the following structure:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "status": 400
+}
+```
+
+- **code**: A string constant identifying the specific error type
+- **status**: The HTTP status code associated with the error
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes to indicate the type of error:
+
+| Status Code | Meaning | Usage |
+|-------------|---------|-------|
+| 400 | Bad Request | Invalid request parameters or malformed data |
+| 401 | Unauthorized | Missing or invalid authentication |
+| 404 | Not Found | Requested resource does not exist |
+| 409 | Conflict | Resource already exists or constraint violation |
+| 415 | Unsupported Media Type | Invalid file type (e.g., image uploads) |
+| 422 | Unprocessable Entity | Validation error or invalid entity state |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Unexpected server error |
+| 503 | Service Unavailable | External service unavailable |
+
+## Common Error Codes
+
+### Authentication & Authorization
+
+```json
+{
+  "code": "UNAUTHORIZED",
+  "status": 401
+}
+```
+
+Returned when authentication is required but not provided or is invalid.
+
+### Resource Not Found
+
+<CodeGroup>
+
+```json User Not Found
+{
+  "code": "USER_NOT_FOUND",
+  "status": 404
+}
+```
+
+```json Profile Not Found
+{
+  "code": "PROFILE_NOT_FOUND",
+  "status": 404
+}
+```
+
+```json Game Not Found
+{
+  "code": "GAME_NOT_FOUND",
+  "status": 404
+}
+```
+
+```json Generic Not Found
+{
+  "code": "NOT_FOUND",
+  "status": 404
+}
+```
+
+</CodeGroup>
+
+### Conflict Errors
+
+<CodeGroup>
+
+```json Already Exists
+{
+  "code": "FAVORITE_ALREADY_EXISTS",
+  "status": 409
+}
+```
+
+```json Database Conflict
+{
+  "code": "DATABASE_CONFLICT",
+  "status": 409
+}
+```
+
+```json Already Refreshed
+{
+  "code": "GAME_ALREADY_REFRESHED",
+  "status": 409
+}
+```
+
+</CodeGroup>
+
+<Info>
+Database conflicts (like unique constraint violations) are automatically mapped to the `DATABASE_CONFLICT` error code.
+</Info>
+
+### Validation Errors
+
+```json
+{
+  "code": "DATABASE_VALIDATION_ERROR",
+  "status": 422
+}
+```
+
+Returned when database validation fails or when request data doesn't meet schema requirements.
+
+### Rate Limiting
+
+```json
+{
+  "code": "RATE_LIMIT_EXCEEDED",
+  "status": 429
+}
+```
+
+<Warning>
+See the [Rate Limiting](/guides/rate-limiting) guide for details on rate limits and block durations.
+</Warning>
+
+### External Service Errors
+
+<CodeGroup>
+
+```json IGDB Service
+{
+  "code": "GAME_SERVICE_UNAVAILABLE",
+  "status": 503
+}
+```
+
+```json TMDB Service
+{
+  "code": "TMDB_SERVICE_UNAVAILABLE",
+  "status": 503
+}
+```
+
+```json Jikan Service
+{
+  "code": "JIKAN_SERVICE_UNAVAILABLE",
+  "status": 503
+}
+```
+
+```json Hardcover Service
+{
+  "code": "HARDCOVER_SERVICE_UNAVAILABLE",
+  "status": 503
+}
+```
+
+</CodeGroup>
+
+### Upload Errors
+
+<CodeGroup>
+
+```json Invalid Image Type
+{
+  "code": "IMAGE_TYPE_NOT_SUPPORTED",
+  "status": 415
+}
+```
+
+```json Upload Failed
+{
+  "code": "FAILED_TO_UPLOAD_IMAGE",
+  "status": 400
+}
+```
+
+</CodeGroup>
+
+## Database Exception Handling
+
+The API automatically converts Prisma database errors into user-friendly error responses:
+
+### Prisma Error Mappings
+
+| Prisma Error Code | Error Response | Description |
+|-------------------|----------------|-------------|
+| P2002, P2003 | `DATABASE_CONFLICT` | Unique constraint or foreign key violation |
+| P2025 | `DATABASE_ITEM_NOT_FOUND` | Record not found in database |
+| Validation Error | `DATABASE_VALIDATION_ERROR` | Invalid data type or format |
+
+<Note>
+These mappings are handled automatically by the `HttpExceptionFilter` at `src/shared/filters/http-exception.filter.ts:14-32`.
+</Note>
+
+## Handling Errors in Your Application
+
+### TypeScript Example
+
+```typescript
+import axios, { AxiosError } from 'axios';
+
+interface TrackGeekError {
+  code: string;
+  status: number;
+}
+
+async function getGame(id: string) {
+  try {
+    const response = await axios.get(`https://api.trackgeek.com/games/${id}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const trackGeekError = error.response?.data as TrackGeekError;
+      
+      switch (trackGeekError.code) {
+        case 'GAME_NOT_FOUND':
+          console.error('Game does not exist');
+          break;
+        case 'RATE_LIMIT_EXCEEDED':
+          console.error('Too many requests, please wait');
+          break;
+        case 'UNAUTHORIZED':
+          console.error('Authentication required');
+          break;
+        default:
+          console.error('An error occurred:', trackGeekError.code);
+      }
+    }
+    throw error;
+  }
+}
+```
+
+### JavaScript Example
+
+```javascript
+async function createReview(gameId, reviewData) {
+  try {
+    const response = await fetch(`https://api.trackgeek.com/games/${gameId}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reviewData)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      
+      if (error.code === 'REVIEW_ALREADY_EXISTS') {
+        alert('You have already reviewed this game');
+        return;
+      }
+      
+      if (error.code === 'RATE_LIMIT_EXCEEDED') {
+        alert('Too many requests. Please wait a few minutes.');
+        return;
+      }
+      
+      throw new Error(error.code);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to create review:', error);
+    throw error;
+  }
+}
+```
+
+### Python Example
+
+```python
+import requests
+from typing import Dict, Any
+
+def get_user_profile(user_id: str) -> Dict[str, Any]:
+    try:
+        response = requests.get(f"https://api.trackgeek.com/users/{user_id}/profile")
+        response.raise_for_status()
+        return response.json()
+    except requests.HTTPError as e:
+        error_data = e.response.json()
+        error_code = error_data.get("code")
+        
+        if error_code == "PROFILE_NOT_FOUND":
+            print("Profile does not exist")
+        elif error_code == "UNAUTHORIZED":
+            print("Authentication required")
+        elif error_code == "RATE_LIMIT_EXCEEDED":
+            print("Rate limit exceeded, please wait")
+        else:
+            print(f"Error: {error_code}")
+        
+        raise
+```
+
+## Complete Error Code Reference
+
+For a complete list of all error codes, see the source at `src/shared/constants/error-codes.ts`. The main categories include:
+
+- **User & Profile Errors**: `USER_NOT_FOUND`, `PROFILE_NOT_FOUND`, `USER_CANNOT_FOLLOW_SELF`, etc.
+- **Content Errors**: `GAME_NOT_FOUND`, `MOVIE_NOT_FOUND`, `ANIME_NOT_FOUND`, `BOOK_NOT_FOUND`, etc.
+- **Review Errors**: `REVIEW_NOT_FOUND`, `REVIEW_ALREADY_EXISTS`
+- **List Errors**: `LIST_NOT_FOUND`, `LIST_ALREADY_EXISTS`, `LIST_ITEM_NOT_FOUND`
+- **Favorite Errors**: `FAVORITE_NOT_FOUND`, `FAVORITE_ALREADY_EXISTS`
+- **Database Errors**: `DATABASE_CONFLICT`, `DATABASE_ITEM_NOT_FOUND`, `DATABASE_VALIDATION_ERROR`
+- **Service Errors**: `GAME_SERVICE_UNAVAILABLE`, `TMDB_SERVICE_UNAVAILABLE`, etc.
+
+<Warning>
+Always handle errors gracefully in production applications. Never expose raw error messages to end users.
+</Warning>

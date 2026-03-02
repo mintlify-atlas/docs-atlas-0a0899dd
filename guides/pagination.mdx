@@ -1,0 +1,401 @@
+---
+title: 'Pagination'
+description: 'Learn how to paginate through large datasets using cursor-based and offset-based pagination in the TrackGeek API'
+---
+
+## Overview
+
+The TrackGeek API supports two pagination strategies to efficiently handle large datasets:
+
+1. **Cursor-based pagination** - Recommended for real-time feeds and large datasets
+2. **Offset-based pagination** - Traditional page-based navigation
+
+Both methods limit the maximum items per page to **50** to ensure optimal performance.
+
+## Cursor Pagination
+
+Cursor-based pagination uses an opaque cursor string to fetch the next set of results. This approach is more efficient for large datasets and handles real-time updates better than offset pagination.
+
+### Request Parameters
+
+| Parameter | Type | Required | Default | Constraints | Description |
+|-----------|------|----------|---------|-------------|-------------|
+| `cursor` | string | No | - | - | Opaque cursor string from previous response |
+| `itemsPerPage` | number | No | - | Min: 1, Max: 50 | Number of items to return |
+
+<Info>
+The first request should not include a cursor. Use the `nextCursor` from the response to fetch subsequent pages.
+</Info>
+
+### Response Format
+
+```typescript
+interface CursorPaginationResult<T> {
+  nextCursor: string | null;
+  hasNextPage: boolean;
+  items: T[];
+}
+```
+
+- **nextCursor**: Cursor for the next page, or `null` if no more results
+- **hasNextPage**: Boolean indicating if more results are available
+- **items**: Array of result items
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript TypeScript
+interface Game {
+  id: string;
+  title: string;
+  releaseDate: string;
+}
+
+interface CursorResponse {
+  nextCursor: string | null;
+  hasNextPage: boolean;
+  items: Game[];
+}
+
+async function fetchAllGames() {
+  const allGames: Game[] = [];
+  let cursor: string | undefined;
+  
+  do {
+    const params = new URLSearchParams({
+      itemsPerPage: '20',
+      ...(cursor && { cursor })
+    });
+    
+    const response = await fetch(`https://api.trackgeek.com/games?${params}`);
+    const data: CursorResponse = await response.json();
+    
+    allGames.push(...data.items);
+    cursor = data.nextCursor ?? undefined;
+    
+  } while (cursor);
+  
+  return allGames;
+}
+```
+
+```javascript JavaScript
+async function fetchAllGames() {
+  const allGames = [];
+  let cursor = null;
+  
+  do {
+    const params = new URLSearchParams({
+      itemsPerPage: '20'
+    });
+    
+    if (cursor) {
+      params.append('cursor', cursor);
+    }
+    
+    const response = await fetch(`https://api.trackgeek.com/games?${params}`);
+    const data = await response.json();
+    
+    allGames.push(...data.items);
+    cursor = data.nextCursor;
+    
+  } while (cursor);
+  
+  return allGames;
+}
+```
+
+```python Python
+import requests
+from typing import List, Dict, Any
+
+def fetch_all_games() -> List[Dict[str, Any]]:
+    all_games = []
+    cursor = None
+    
+    while True:
+        params = {"itemsPerPage": 20}
+        if cursor:
+            params["cursor"] = cursor
+        
+        response = requests.get(
+            "https://api.trackgeek.com/games",
+            params=params
+        )
+        data = response.json()
+        
+        all_games.extend(data["items"])
+        cursor = data["nextCursor"]
+        
+        if not cursor:
+            break
+    
+    return all_games
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "nextCursor": "eyJpZCI6IjEyMzQ1Njc4OTAiLCJ0aW1lc3RhbXAiOjE2MzI0MjUwMDB9",
+  "hasNextPage": true,
+  "items": [
+    {
+      "id": "game-1",
+      "title": "The Legend of Zelda: Breath of the Wild",
+      "releaseDate": "2017-03-03"
+    },
+    {
+      "id": "game-2",
+      "title": "Super Mario Odyssey",
+      "releaseDate": "2017-10-27"
+    }
+  ]
+}
+```
+
+<Warning>
+Cursors are opaque strings and should not be parsed or modified. Always use the exact cursor string returned by the API.
+</Warning>
+
+## Offset Pagination
+
+Offset-based pagination uses page numbers to navigate through results. This is familiar and intuitive but can be less efficient for very large datasets.
+
+### Request Parameters
+
+| Parameter | Type | Required | Default | Constraints | Description |
+|-----------|------|----------|---------|-------------|-------------|
+| `page` | number | No | - | Min: 0 | Zero-based page number |
+| `itemsPerPage` | number | No | - | Min: 1, Max: 50 | Number of items per page |
+
+### Response Format
+
+```typescript
+interface OffsetPaginationResult<T> {
+  count: number;
+  pages: number;
+  inPage: number;
+  itemsInPage: number;
+  itemsPerPage: number;
+  items: T[];
+}
+```
+
+- **count**: Total number of items across all pages
+- **pages**: Total number of pages
+- **inPage**: Current page number (zero-based)
+- **itemsInPage**: Number of items in the current page
+- **itemsPerPage**: Requested items per page
+- **items**: Array of result items
+
+### Example Usage
+
+<CodeGroup>
+
+```typescript TypeScript
+interface Review {
+  id: string;
+  rating: number;
+  content: string;
+}
+
+interface OffsetResponse {
+  count: number;
+  pages: number;
+  inPage: number;
+  itemsInPage: number;
+  itemsPerPage: number;
+  items: Review[];
+}
+
+async function fetchReviewsPage(page: number = 0, itemsPerPage: number = 10) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    itemsPerPage: itemsPerPage.toString()
+  });
+  
+  const response = await fetch(`https://api.trackgeek.com/reviews?${params}`);
+  const data: OffsetResponse = await response.json();
+  
+  console.log(`Page ${data.inPage + 1} of ${data.pages}`);
+  console.log(`Showing ${data.itemsInPage} of ${data.count} total items`);
+  
+  return data;
+}
+
+// Fetch all pages
+async function fetchAllReviews() {
+  const firstPage = await fetchReviewsPage(0, 50);
+  const allReviews = [...firstPage.items];
+  
+  for (let page = 1; page < firstPage.pages; page++) {
+    const pageData = await fetchReviewsPage(page, 50);
+    allReviews.push(...pageData.items);
+  }
+  
+  return allReviews;
+}
+```
+
+```javascript JavaScript
+async function fetchReviewsPage(page = 0, itemsPerPage = 10) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    itemsPerPage: itemsPerPage.toString()
+  });
+  
+  const response = await fetch(`https://api.trackgeek.com/reviews?${params}`);
+  const data = await response.json();
+  
+  console.log(`Page ${data.inPage + 1} of ${data.pages}`);
+  console.log(`Showing ${data.itemsInPage} of ${data.count} total items`);
+  
+  return data;
+}
+
+// Fetch all pages
+async function fetchAllReviews() {
+  const firstPage = await fetchReviewsPage(0, 50);
+  const allReviews = [...firstPage.items];
+  
+  for (let page = 1; page < firstPage.pages; page++) {
+    const pageData = await fetchReviewsPage(page, 50);
+    allReviews.push(...pageData.items);
+  }
+  
+  return allReviews;
+}
+```
+
+```python Python
+import requests
+from typing import Dict, Any, List
+
+def fetch_reviews_page(page: int = 0, items_per_page: int = 10) -> Dict[str, Any]:
+    params = {
+        "page": page,
+        "itemsPerPage": items_per_page
+    }
+    
+    response = requests.get(
+        "https://api.trackgeek.com/reviews",
+        params=params
+    )
+    data = response.json()
+    
+    print(f"Page {data['inPage'] + 1} of {data['pages']}")
+    print(f"Showing {data['itemsInPage']} of {data['count']} total items")
+    
+    return data
+
+# Fetch all pages
+def fetch_all_reviews() -> List[Dict[str, Any]]:
+    first_page = fetch_reviews_page(0, 50)
+    all_reviews = first_page["items"].copy()
+    
+    for page in range(1, first_page["pages"]):
+        page_data = fetch_reviews_page(page, 50)
+        all_reviews.extend(page_data["items"])
+    
+    return all_reviews
+```
+
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "count": 156,
+  "pages": 16,
+  "inPage": 0,
+  "itemsInPage": 10,
+  "itemsPerPage": 10,
+  "items": [
+    {
+      "id": "review-1",
+      "rating": 5,
+      "content": "Amazing game!"
+    },
+    {
+      "id": "review-2",
+      "rating": 4,
+      "content": "Really enjoyed it."
+    }
+  ]
+}
+```
+
+<Note>
+Page numbers are **zero-based**. The first page is `page=0`, not `page=1`.
+</Note>
+
+## Choosing the Right Pagination Method
+
+### Use Cursor Pagination When:
+
+- Working with real-time data that updates frequently
+- Fetching large datasets (thousands of records)
+- Building infinite scroll interfaces
+- You need consistent results even as data changes
+
+### Use Offset Pagination When:
+
+- Building traditional page-based UI (page 1, 2, 3...)
+- You need to know the total count upfront
+- Users need to jump to specific pages
+- Working with relatively small, stable datasets
+
+## Validation
+
+Both pagination methods include validation to ensure optimal performance:
+
+```typescript
+class CursorPaginationParamsDto {
+  @IsOptional()
+  @IsString()
+  readonly cursor?: string;
+  
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  @Min(1)
+  @Max(50)
+  readonly itemsPerPage?: number;
+}
+
+class OffsetPaginationParamsDto {
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  readonly page?: number;
+  
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  @Min(1)
+  @Max(50)
+  readonly itemsPerPage?: number;
+}
+```
+
+<Warning>
+Requesting more than 50 items per page will result in a validation error. Break large requests into multiple paginated calls.
+</Warning>
+
+## Performance Tips
+
+1. **Set appropriate page sizes**: Balance between fewer requests (larger pages) and faster response times (smaller pages)
+2. **Cache results**: Store paginated results on the client to avoid redundant requests
+3. **Use cursor pagination for feeds**: Activity feeds and timelines benefit from cursor-based pagination
+4. **Respect rate limits**: Be mindful of [rate limits](/guides/rate-limiting) when fetching multiple pages
+
+## Implementation Reference
+
+The pagination DTOs are defined at:
+- Cursor pagination: `src/shared/infra/database/dtos/cursor-pagination.dto.ts:1-31`
+- Offset pagination: `src/shared/infra/database/dtos/offset-pagination.dto.ts:1-36`

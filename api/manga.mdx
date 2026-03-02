@@ -1,0 +1,392 @@
+---
+title: 'Manga'
+description: 'Search, retrieve, and refresh manga information from MyAnimeList'
+---
+
+## Search Manga
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Search for manga by title or keywords.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/manga/search?query=one%20piece" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/manga/search?query=one%20piece', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.trackgeek.com/manga/search',
+    params={'query': 'one piece'},
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="query" type="string" required>
+  Search query string. Must be at least 3 characters long.
+</ParamField>
+
+### Response
+
+<ResponseField name="mangas" type="array">
+  Array of manga objects matching the search query.
+  
+  <Expandable title="manga object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="malId" type="number">
+      MyAnimeList ID
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Manga title
+    </ResponseField>
+    
+    <ResponseField name="imageUrl" type="string">
+      Cover image URL
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Manga type (Manga, Novel, Manhwa, Manhua, etc.)
+    </ResponseField>
+    
+    <ResponseField name="numberOfChapters" type="number">
+      Total number of chapters
+    </ResponseField>
+    
+    <ResponseField name="numberOfVolumes" type="number">
+      Total number of volumes
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Publishing status
+    </ResponseField>
+    
+    <ResponseField name="synopsis" type="string">
+      Synopsis/description
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="authors" type="array">
+      Array of author objects
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "mangas": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "malId": 13,
+      "title": "One Piece",
+      "imageUrl": "https://cdn.myanimelist.net/images/manga/2/253146.jpg",
+      "type": "Manga",
+      "numberOfChapters": null,
+      "numberOfVolumes": null,
+      "status": "Publishing",
+      "synopsis": "Gol D. Roger was known as the Pirate King...",
+      "genres": [
+        { "name": "Action", "malId": 1 },
+        { "name": "Adventure", "malId": 2 }
+      ],
+      "authors": [
+        { "name": "Oda, Eiichiro", "malId": 1881 }
+      ]
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+---
+
+## Get Manga Details
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Retrieve detailed information about a specific manga by its ID.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/manga/details/13" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const mangaId = 13;
+const response = await fetch(`https://api.trackgeek.com/manga/details/${mangaId}`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+manga_id = 13
+response = requests.get(
+    f'https://api.trackgeek.com/manga/details/{manga_id}',
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="mangaId" type="integer" required>
+  The unique manga identifier. Must be a valid integer.
+</ParamField>
+
+### Response
+
+<ResponseField name="manga" type="object">
+  Detailed manga information.
+  
+  <Expandable title="manga object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="malId" type="number">
+      MyAnimeList ID
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      MyAnimeList URL
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Main title
+    </ResponseField>
+    
+    <ResponseField name="titles" type="array">
+      Alternative titles in different languages
+    </ResponseField>
+    
+    <ResponseField name="imageUrl" type="string">
+      Cover image URL
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Manga type (Manga, Novel, One-shot, Doujinshi, Manhwa, Manhua, OEL)
+    </ResponseField>
+    
+    <ResponseField name="numberOfChapters" type="number">
+      Total number of chapters
+    </ResponseField>
+    
+    <ResponseField name="numberOfVolumes" type="number">
+      Total number of volumes
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Publishing status (Publishing, Finished, On Hiatus, Discontinued)
+    </ResponseField>
+    
+    <ResponseField name="publishing" type="boolean">
+      Whether currently publishing
+    </ResponseField>
+    
+    <ResponseField name="published" type="object">
+      Publication dates with from and to fields
+    </ResponseField>
+    
+    <ResponseField name="rank" type="number">
+      MyAnimeList ranking
+    </ResponseField>
+    
+    <ResponseField name="popularity" type="number">
+      Popularity ranking
+    </ResponseField>
+    
+    <ResponseField name="synopsis" type="string">
+      Full synopsis
+    </ResponseField>
+    
+    <ResponseField name="authors" type="array">
+      Array of author objects with roles
+    </ResponseField>
+    
+    <ResponseField name="serializations" type="array">
+      Array of serialization objects
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="themes" type="array">
+      Array of theme objects
+    </ResponseField>
+    
+    <ResponseField name="demographics" type="array">
+      Array of demographic objects (Shounen, Shoujo, Seinen, Josei)
+    </ResponseField>
+    
+    <ResponseField name="relations" type="array">
+      Related manga and adaptations
+    </ResponseField>
+    
+    <ResponseField name="characters" type="array">
+      Main characters information
+    </ResponseField>
+    
+    <ResponseField name="lastRefreshedAt" type="string">
+      ISO 8601 timestamp of last data refresh
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "manga": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "malId": 13,
+    "url": "https://myanimelist.net/manga/13/One_Piece",
+    "title": "One Piece",
+    "titles": [
+      { "type": "Default", "title": "One Piece" },
+      { "type": "Japanese", "title": "ONE PIECE" },
+      { "type": "English", "title": "One Piece" }
+    ],
+    "imageUrl": "https://cdn.myanimelist.net/images/manga/2/253146.jpg",
+    "type": "Manga",
+    "numberOfChapters": null,
+    "numberOfVolumes": null,
+    "status": "Publishing",
+    "publishing": true,
+    "synopsis": "Gol D. Roger was known as the Pirate King...",
+    "authors": [
+      { "malId": 1881, "name": "Oda, Eiichiro", "role": "Story & Art" }
+    ],
+    "genres": [
+      { "malId": 1, "name": "Action" },
+      { "malId": 2, "name": "Adventure" }
+    ],
+    "lastRefreshedAt": "2026-03-02T10:00:00.000Z",
+    "createdAt": "2026-01-15T08:30:00.000Z",
+    "updatedAt": "2026-03-02T10:00:00.000Z"
+  }
+}
+```
+
+</ResponseExample>
+
+---
+
+## Refresh Manga
+
+<Note>
+  This endpoint requires authentication. Include your API token in the Authorization header.
+</Note>
+
+Refresh manga data from MyAnimeList to get the latest information.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.trackgeek.com/manga/refresh" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 13
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/manga/refresh', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: 13
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.trackgeek.com/manga/refresh',
+    headers={
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={'id': 13}
+)
+```
+
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="id" type="integer" required>
+  The MyAnimeList ID of the manga to refresh. Must be a valid integer.
+</ParamField>
+
+### Response
+
+Returns HTTP 200 on successful refresh with no body content.
+
+<ResponseExample>
+
+```json Success Response
+{}
+```
+
+</ResponseExample>

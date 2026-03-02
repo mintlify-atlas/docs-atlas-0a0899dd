@@ -1,0 +1,551 @@
+---
+title: 'Reviews'
+description: 'Create, update, and manage reviews for all media types'
+---
+
+<Note>
+Reviews allow users to rate and critique media with detailed breakdowns. Each media type has specific rating categories.
+</Note>
+
+## Review Field Validations
+
+All review endpoints enforce these validations:
+
+- **Rating fields**: Decimal values between 0 and 10
+- **summary**: Max 250 characters
+- **notes**: Max 1000 characters
+- **pros/cons** (anime only): Max 500 characters each
+- **story/characters** (manga only): Max 500 characters each
+
+---
+
+## Anime Reviews
+
+### Create Anime Review
+
+<Tabs>
+  <Tab title="Request">
+    ```bash POST /api/anime/review
+    curl -X POST https://api.trackgeek.com/anime/review \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "animeId": "anime-uuid-here",
+        "overall": 8.5,
+        "story": 9.0,
+        "characters": 8.0,
+        "animation": 9.5,
+        "sound": 8.5,
+        "enjoyment": 9.0,
+        "summary": "An excellent anime with great character development",
+        "pros": "Beautiful animation, compelling story",
+        "cons": "Pacing issues in middle episodes",
+        "notes": "Additional thoughts and observations",
+        "recommended": true
+      }'
+    ```
+  </Tab>
+  <Tab title="Response">
+    ```json 201 Created
+    {
+      "id": "review-uuid",
+      "overall": 8.5,
+      "story": 9.0,
+      "characters": 8.0,
+      "animation": 9.5,
+      "sound": 8.5,
+      "enjoyment": 9.0,
+      "summary": "An excellent anime with great character development",
+      "pros": "Beautiful animation, compelling story",
+      "cons": "Pacing issues in middle episodes",
+      "notes": "Additional thoughts and observations",
+      "recommended": true,
+      "userId": "user-uuid",
+      "animeId": "anime-uuid",
+      "createdAt": "2024-03-02T12:00:00Z",
+      "updatedAt": "2024-03-02T12:00:00Z"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<ParamField body="animeId" type="string" required>
+  The UUID of the anime being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10). Required field that represents the comprehensive score.
+</ParamField>
+
+<ParamField body="story" type="number">
+  Story/plot rating (0-10)
+</ParamField>
+
+<ParamField body="characters" type="number">
+  Character development rating (0-10)
+</ParamField>
+
+<ParamField body="animation" type="number">
+  Animation quality rating (0-10)
+</ParamField>
+
+<ParamField body="sound" type="number">
+  Sound/music rating (0-10)
+</ParamField>
+
+<ParamField body="enjoyment" type="number">
+  Personal enjoyment rating (0-10)
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="pros" type="string">
+  Positive aspects (max 500 characters)
+</ParamField>
+
+<ParamField body="cons" type="string">
+  Negative aspects (max 500 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this anime
+</ParamField>
+
+### Get Anime Reviews
+
+```bash GET /api/anime/review
+curl "https://api.trackgeek.com/anime/review?animeId=anime-uuid-here&offset=0&limit=20"
+```
+
+<ParamField query="animeId" type="string">
+  Filter reviews by anime UUID
+</ParamField>
+
+<ParamField query="userId" type="string">
+  Filter reviews by user UUID
+</ParamField>
+
+<ParamField query="offset" type="number">
+  Pagination offset (default: 0)
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page (default: 20)
+</ParamField>
+
+### Get Anime Review by ID
+
+```bash GET /api/anime/review/{reviewId}
+curl https://api.trackgeek.com/anime/review/{reviewId}
+```
+
+<ParamField path="reviewId" type="string" required>
+  The UUID of the review
+</ParamField>
+
+### Update Anime Review
+
+```bash PATCH /api/anime/review/{reviewId}
+curl -X PATCH https://api.trackgeek.com/anime/review/{reviewId} \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "overall": 9.0,
+    "animation": 10.0
+  }'
+```
+
+<Note>
+Only the review author can update their review. All fields from create are available for update.
+</Note>
+
+### Delete Anime Review
+
+```bash DELETE /api/anime/review/{reviewId}
+curl -X DELETE https://api.trackgeek.com/anime/review/{reviewId} \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+<Warning>
+Deleting a review is permanent and cannot be undone.
+</Warning>
+
+---
+
+## Game Reviews
+
+### Create Game Review
+
+```bash POST /api/game/review
+curl -X POST https://api.trackgeek.com/game/review \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gameId": "game-uuid-here",
+    "overall": 8.5,
+    "graphics": 9.0,
+    "sound": 8.0,
+    "story": 8.5,
+    "gameplay": 9.0,
+    "platform": "PlayStation 5",
+    "summary": "A fantastic gaming experience",
+    "notes": "Played on PS5 with HDR enabled",
+    "recommended": true,
+    "screenshots": ["url1", "url2"]
+  }'
+```
+
+<ParamField body="gameId" type="string" required>
+  The UUID of the game being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10)
+</ParamField>
+
+<ParamField body="graphics" type="number">
+  Graphics/visuals rating (0-10)
+</ParamField>
+
+<ParamField body="sound" type="number">
+  Sound/music rating (0-10)
+</ParamField>
+
+<ParamField body="story" type="number">
+  Story/narrative rating (0-10)
+</ParamField>
+
+<ParamField body="gameplay" type="number">
+  Gameplay mechanics rating (0-10)
+</ParamField>
+
+<ParamField body="platform" type="string">
+  Platform played on (e.g., "PlayStation 5", "PC", "Xbox Series X")
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this game
+</ParamField>
+
+<ParamField body="screenshots" type="string[]">
+  Array of screenshot URLs (max 10)
+</ParamField>
+
+### Game Review Operations
+
+Game reviews support the same operations as anime reviews:
+
+- `GET /api/game/review` - List reviews with filters
+- `GET /api/game/review/{reviewId}` - Get single review
+- `PATCH /api/game/review/{reviewId}` - Update review
+- `DELETE /api/game/review/{reviewId}` - Delete review
+
+---
+
+## Manga Reviews
+
+### Create Manga Review
+
+```bash POST /api/manga/review
+curl -X POST https://api.trackgeek.com/manga/review \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mangaId": "manga-uuid-here",
+    "overall": 8.5,
+    "art": 9.0,
+    "worldbuilding": 8.5,
+    "summary": "Captivating story with beautiful art",
+    "story": "Complex plot with interesting twists",
+    "characters": "Well-developed cast with depth",
+    "notes": "Read the official translation",
+    "recommended": true
+  }'
+```
+
+<ParamField body="mangaId" type="string" required>
+  The UUID of the manga being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10)
+</ParamField>
+
+<ParamField body="art" type="number">
+  Art style/quality rating (0-10)
+</ParamField>
+
+<ParamField body="worldbuilding" type="number">
+  World-building rating (0-10)
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="story" type="string">
+  Detailed story thoughts (max 500 characters)
+</ParamField>
+
+<ParamField body="characters" type="string">
+  Character analysis (max 500 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this manga
+</ParamField>
+
+### Manga Review Operations
+
+- `GET /api/manga/review` - List reviews
+- `GET /api/manga/review/{reviewId}` - Get single review
+- `PATCH /api/manga/review/{reviewId}` - Update review
+- `DELETE /api/manga/review/{reviewId}` - Delete review
+
+---
+
+## Movie Reviews
+
+### Create Movie Review
+
+```bash POST /api/movie/review
+curl -X POST https://api.trackgeek.com/movie/review \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "movieId": "movie-uuid-here",
+    "overall": 8.5,
+    "direction": 9.0,
+    "production": 8.5,
+    "acting": 9.0,
+    "summary": "A masterfully crafted film",
+    "story": "Compelling narrative that keeps you engaged",
+    "notes": "Saw in IMAX",
+    "recommended": true
+  }'
+```
+
+<ParamField body="movieId" type="string" required>
+  The UUID of the movie being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10)
+</ParamField>
+
+<ParamField body="direction" type="number">
+  Direction/directing rating (0-10)
+</ParamField>
+
+<ParamField body="production" type="number">
+  Production quality rating (0-10)
+</ParamField>
+
+<ParamField body="acting" type="number">
+  Acting performance rating (0-10)
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="story" type="string">
+  Story thoughts (max 500 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this movie
+</ParamField>
+
+### Movie Review Operations
+
+- `GET /api/movie/review` - List reviews
+- `GET /api/movie/review/{reviewId}` - Get single review
+- `PATCH /api/movie/review/{reviewId}` - Update review
+- `DELETE /api/movie/review/{reviewId}` - Delete review
+
+---
+
+## TV Show Reviews
+
+### Create TV Show Review
+
+```bash POST /api/tv/review
+curl -X POST https://api.trackgeek.com/tv/review \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tvShowId": "tvshow-uuid-here",
+    "overall": 8.5,
+    "direction": 9.0,
+    "production": 8.5,
+    "acting": 9.0,
+    "summary": "Binge-worthy series with great performances",
+    "story": "Engaging plot throughout all seasons",
+    "notes": "Watched all 3 seasons",
+    "recommended": true
+  }'
+```
+
+<ParamField body="tvShowId" type="string" required>
+  The UUID of the TV show being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10)
+</ParamField>
+
+<ParamField body="direction" type="number">
+  Direction rating (0-10)
+</ParamField>
+
+<ParamField body="production" type="number">
+  Production quality rating (0-10)
+</ParamField>
+
+<ParamField body="acting" type="number">
+  Acting performance rating (0-10)
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="story" type="string">
+  Story thoughts (max 500 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this TV show
+</ParamField>
+
+### TV Show Review Operations
+
+- `GET /api/tv/review` - List reviews
+- `GET /api/tv/review/{reviewId}` - Get single review
+- `PATCH /api/tv/review/{reviewId}` - Update review
+- `DELETE /api/tv/review/{reviewId}` - Delete review
+
+---
+
+## Book Reviews
+
+### Create Book Review
+
+```bash POST /api/book/review
+curl -X POST https://api.trackgeek.com/book/review \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bookId": "book-uuid-here",
+    "overall": 8.5,
+    "characters": 9.0,
+    "language": 8.5,
+    "theme": 8.0,
+    "summary": "A thought-provoking read",
+    "notes": "Read the paperback edition",
+    "recommended": true
+  }'
+```
+
+<ParamField body="bookId" type="string" required>
+  The UUID of the book being reviewed
+</ParamField>
+
+<ParamField body="overall" type="number" required>
+  Overall rating (0-10)
+</ParamField>
+
+<ParamField body="characters" type="number">
+  Character development rating (0-10)
+</ParamField>
+
+<ParamField body="language" type="number">
+  Writing style/language rating (0-10)
+</ParamField>
+
+<ParamField body="theme" type="number">
+  Theme/message rating (0-10)
+</ParamField>
+
+<ParamField body="summary" type="string">
+  Brief review summary (max 250 characters)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional notes (max 1000 characters)
+</ParamField>
+
+<ParamField body="recommended" type="boolean">
+  Whether you recommend this book
+</ParamField>
+
+### Book Review Operations
+
+- `GET /api/book/review` - List reviews
+- `GET /api/book/review/{reviewId}` - Get single review
+- `PATCH /api/book/review/{reviewId}` - Update review
+- `DELETE /api/book/review/{reviewId}` - Delete review
+
+---
+
+## Response Fields
+
+All review responses include these standard fields:
+
+<ResponseField name="id" type="string">
+  Review UUID
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  Author's user UUID
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of creation
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of last update
+</ResponseField>
+
+## Authentication
+
+All POST, PATCH, and DELETE endpoints require authentication via Bearer token:
+
+```bash
+Authorization: Bearer YOUR_TOKEN
+```
+
+## Constraints
+
+- Users can only have one review per media item (enforced by unique constraint on `userId` + media ID)
+- Only the review author can update or delete their review
+- All rating fields must be decimal values between 0 and 10
+- The `overall` field is always required when creating a review

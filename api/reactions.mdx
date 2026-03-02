@@ -1,0 +1,266 @@
+---
+title: "Reactions"
+description: "Endpoints for adding and removing emoji reactions to comments and feed events"
+---
+
+## Add Reaction
+
+<Info>
+  This endpoint requires authentication. Add an emoji reaction to a comment or feed event.
+</Info>
+
+```http
+POST /reaction
+```
+
+React to comments or feed events with an emoji.
+
+### Request Body
+
+<ParamField body="type" type="ReactionType" required>
+  The type of content being reacted to. Must be one of:
+  - `Comment` - React to a comment
+  - `FeedEvent` - React to a feed event
+</ParamField>
+
+<ParamField body="emoji" type="string" required>
+  A valid emoji character (e.g., "👍", "❤️", "😂")
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the ID of the item being reacted to. The required field depends on the `type`:
+  - For `Comment`: `{ "commentId": "uuid" }`
+  - For `FeedEvent`: `{ "feedEventId": "uuid" }`
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+<Tabs>
+  <Tab title="React to Comment">
+    ```bash
+    curl -X POST 'https://api.trackgeek.com/reaction' \
+      -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "type": "Comment",
+        "emoji": "👍",
+        "item": {
+          "commentId": "123e4567-e89b-12d3-a456-426614174000"
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="React to Feed Event">
+    ```bash
+    curl -X POST 'https://api.trackgeek.com/reaction' \
+      -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "type": "FeedEvent",
+        "emoji": "❤️",
+        "item": {
+          "feedEventId": "456e7890-e89b-12d3-a456-426614174000"
+        }
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+### Example Response
+
+```json
+{
+  "status": 201
+}
+```
+
+<Note>
+  Each user can only have one reaction per item. If you try to add a duplicate reaction, the request will fail. To change your reaction, delete the existing one first and then create a new one.
+</Note>
+
+---
+
+## Get Reactions
+
+```http
+GET /reaction
+```
+
+Retrieve reactions for a specific comment or feed event with cursor-based pagination.
+
+### Query Parameters
+
+<ParamField query="type" type="ReactionType" required>
+  The type of content to get reactions for. Must be one of:
+  - `Comment` - Get reactions for a comment
+  - `FeedEvent` - Get reactions for a feed event
+</ParamField>
+
+<ParamField query="item" type="object" required>
+  Object containing the ID of the item. For example:
+  - For Comment: `item[commentId]=123e4567-e89b-12d3-a456-426614174000`
+  - For FeedEvent: `item[feedEventId]=456e7890-e89b-12d3-a456-426614174000`
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Pagination cursor for getting the next page of results (optional)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="number">
+  Number of items to return per page (min: 1, max: 50, optional)
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X GET 'https://api.trackgeek.com/reaction?type=Comment&item[commentId]=123e4567-e89b-12d3-a456-426614174000&itemsPerPage=20'
+```
+
+### Example Response
+
+```json
+{
+  "reactions": [
+    {
+      "id": "789e0123-e89b-12d3-a456-426614174000",
+      "emoji": "👍",
+      "type": "Comment",
+      "userId": "456e7890-e89b-12d3-a456-426614174000",
+      "commentId": "123e4567-e89b-12d3-a456-426614174000",
+      "createdAt": "2024-01-15T10:35:00.000Z",
+      "user": {
+        "id": "456e7890-e89b-12d3-a456-426614174000",
+        "name": "John Doe",
+        "username": "johndoe",
+        "image": "https://example.com/avatar.jpg"
+      }
+    },
+    {
+      "id": "890e1234-e89b-12d3-a456-426614174000",
+      "emoji": "❤️",
+      "type": "Comment",
+      "userId": "567e8901-e89b-12d3-a456-426614174000",
+      "commentId": "123e4567-e89b-12d3-a456-426614174000",
+      "createdAt": "2024-01-15T10:40:00.000Z",
+      "user": {
+        "id": "567e8901-e89b-12d3-a456-426614174000",
+        "name": "Jane Smith",
+        "username": "janesmith",
+        "image": "https://example.com/avatar2.jpg"
+      }
+    }
+  ],
+  "nextCursor": null,
+  "hasNextPage": false
+}
+```
+
+### Response Fields
+
+<ResponseField name="reactions" type="array">
+  Array of reaction objects
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string">
+  Cursor for fetching the next page (null if no more pages)
+</ResponseField>
+
+<ResponseField name="hasNextPage" type="boolean">
+  Whether there are more reactions to fetch
+</ResponseField>
+
+---
+
+## Delete Reaction
+
+<Info>
+  This endpoint requires authentication. You can only delete your own reactions.
+</Info>
+
+```http
+DELETE /reaction/:reactionId
+```
+
+Remove a reaction by its ID.
+
+### Path Parameters
+
+<ParamField path="reactionId" type="string" required>
+  The UUID of the reaction to delete
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X DELETE 'https://api.trackgeek.com/reaction/789e0123-e89b-12d3-a456-426614174000' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 204
+}
+```
+
+---
+
+## Reaction Model
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="emoji" type="string">
+  The emoji character used for the reaction
+</ResponseField>
+
+<ResponseField name="type" type="ReactionType">
+  Type of content being reacted to (Comment or FeedEvent)
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  ID of the user who created the reaction
+</ResponseField>
+
+<ResponseField name="commentId" type="string">
+  ID of comment (if type is Comment)
+</ResponseField>
+
+<ResponseField name="feedEventId" type="string">
+  ID of feed event (if type is FeedEvent)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of reaction creation
+</ResponseField>
+
+## ReactionType Enum
+
+The `ReactionType` enum specifies what type of content is being reacted to:
+
+- `Comment` - Reaction to a comment
+- `FeedEvent` - Reaction to a feed event
+
+## Supported Emojis
+
+You can use any valid Unicode emoji character for reactions, including:
+
+- Thumbs: 👍 👎
+- Hearts: ❤️ 💙 💚 💛 💜 🖤 🤍 🤎 💖
+- Faces: 😀 😂 😍 😢 😮 😡 🤔 🙄 😎
+- Symbols: 🔥 ⭐ ✨ 💯 🎉 🎊
+- And many more!
+
+<Note>
+  The emoji must be a single valid emoji character. Combined emoji sequences are supported.
+</Note>

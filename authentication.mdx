@@ -1,0 +1,647 @@
+---
+title: Authentication
+description: Complete guide to authentication with Better Auth, including social providers, magic links, and session management
+---
+
+# Authentication
+
+TrackGeek uses [Better Auth](https://better-auth.com) for modern, secure authentication with support for email/password, social providers, and magic links.
+
+## Authentication Methods
+
+TrackGeek supports multiple authentication methods:
+
+- **Email & Password** - Traditional authentication
+- **Social Providers** - Google, GitHub, Discord
+- **Magic Links** - Passwordless email authentication
+- **Bearer Tokens** - For API clients and mobile apps
+
+## Configuration
+
+Authentication is configured in `src/modules/auth/config/auth.config.ts` and uses the following environment variables:
+
+```bash .env
+# Required
+BETTER_AUTH_URL='http://localhost:40287'
+BETTER_AUTH_SECRET='your-secret-key-here'
+WEB_URL='http://localhost:5173'
+
+# Social Providers (Optional)
+GOOGLE_CLIENT_ID='your-google-client-id'
+GOOGLE_CLIENT_SECRET='your-google-client-secret'
+GITHUB_CLIENT_ID='your-github-client-id'
+GITHUB_CLIENT_SECRET='your-github-client-secret'
+DISCORD_CLIENT_ID='your-discord-client-id'
+DISCORD_CLIENT_SECRET='your-discord-client-secret'
+
+# Email (for magic links)
+RESEND_API_KEY='your-resend-api-key'
+RESEND_FROM='noreply@trackgeek.com'
+```
+
+<Warning>
+  Always generate a strong random secret for `BETTER_AUTH_SECRET`:
+  ```bash
+  openssl rand -base64 32
+  ```
+</Warning>
+
+## Email & Password Authentication
+
+### Sign Up
+
+Create a new account with email and password:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-up/email \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "name": "John Doe"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/sign-up/email', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123',
+    name: 'John Doe'
+  })
+});
+
+const data = await response.json();
+console.log(data.user);
+```
+
+```typescript TypeScript
+interface SignUpResponse {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    username: string;
+    emailVerified: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+  session: {
+    id: string;
+    userId: string;
+    expiresAt: string;
+  };
+}
+
+const response = await fetch('http://localhost:40287/auth/sign-up/email', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123',
+    name: 'John Doe'
+  })
+});
+
+const data: SignUpResponse = await response.json();
+```
+
+</CodeGroup>
+
+<Info>
+  When a user signs up, TrackGeek automatically:
+  - Generates a unique username from their email
+  - Creates a user profile with default settings
+  - Sets session cookies for immediate authentication
+</Info>
+
+### Sign In
+
+Authenticate with existing credentials:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-in/email \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/sign-in/email', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+if (data.user) {
+  console.log('Signed in as:', data.user.name);
+}
+```
+
+```typescript TypeScript
+interface SignInResponse {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    username: string;
+    image?: string;
+  };
+  session: {
+    id: string;
+    userId: string;
+    expiresAt: string;
+  };
+}
+
+const response = await fetch('http://localhost:40287/auth/sign-in/email', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data: SignInResponse = await response.json();
+```
+
+</CodeGroup>
+
+### Sign Out
+
+End the current session:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-out \
+  -b cookies.txt
+```
+
+```javascript JavaScript
+await fetch('http://localhost:40287/auth/sign-out', {
+  method: 'POST',
+  credentials: 'include'
+});
+
+console.log('Signed out successfully');
+```
+
+</CodeGroup>
+
+## Social Authentication
+
+TrackGeek supports OAuth 2.0 authentication with Google, GitHub, and Discord.
+
+### Supported Providers
+
+<CardGroup cols={3}>
+  <Card title="Google" icon="google">
+    OAuth 2.0 authentication with Google accounts
+  </Card>
+  <Card title="GitHub" icon="github">
+    OAuth 2.0 authentication with GitHub accounts
+  </Card>
+  <Card title="Discord" icon="discord">
+    OAuth 2.0 authentication with Discord accounts
+  </Card>
+</CardGroup>
+
+### Setting Up Social Providers
+
+<Steps>
+  <Step title="Configure Google OAuth">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com)
+    2. Create a new project or select existing
+    3. Enable Google+ API
+    4. Create OAuth 2.0 credentials
+    5. Add authorized redirect URI: `http://localhost:40287/auth/callback/google`
+    6. Copy Client ID and Client Secret to `.env`:
+
+    ```bash
+    GOOGLE_CLIENT_ID='your-google-client-id'
+    GOOGLE_CLIENT_SECRET='your-google-client-secret'
+    ```
+  </Step>
+
+  <Step title="Configure GitHub OAuth">
+    1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+    2. Click "New OAuth App"
+    3. Set Authorization callback URL: `http://localhost:40287/auth/callback/github`
+    4. Copy Client ID and generate Client Secret
+    5. Add to `.env`:
+
+    ```bash
+    GITHUB_CLIENT_ID='your-github-client-id'
+    GITHUB_CLIENT_SECRET='your-github-client-secret'
+    ```
+  </Step>
+
+  <Step title="Configure Discord OAuth">
+    1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+    2. Create a new application
+    3. Go to OAuth2 settings
+    4. Add redirect: `http://localhost:40287/auth/callback/discord`
+    5. Copy Client ID and Client Secret to `.env`:
+
+    ```bash
+    DISCORD_CLIENT_ID='your-discord-client-id'
+    DISCORD_CLIENT_SECRET='your-discord-client-secret'
+    ```
+  </Step>
+</Steps>
+
+### Social Sign In Flow
+
+To initiate social authentication, redirect users to:
+
+```
+http://localhost:40287/auth/sign-in/google
+http://localhost:40287/auth/sign-in/github
+http://localhost:40287/auth/sign-in/discord
+```
+
+<CodeGroup>
+
+```html HTML
+<a href="http://localhost:40287/auth/sign-in/google">
+  Sign in with Google
+</a>
+
+<a href="http://localhost:40287/auth/sign-in/github">
+  Sign in with GitHub
+</a>
+
+<a href="http://localhost:40287/auth/sign-in/discord">
+  Sign in with Discord
+</a>
+```
+
+```javascript JavaScript
+// Redirect to social provider
+window.location.href = 'http://localhost:40287/auth/sign-in/google';
+```
+
+```typescript React
+function SocialLogin() {
+  const handleSocialLogin = (provider: 'google' | 'github' | 'discord') => {
+    window.location.href = `http://localhost:40287/auth/sign-in/${provider}`;
+  };
+
+  return (
+    <div>
+      <button onClick={() => handleSocialLogin('google')}>
+        Sign in with Google
+      </button>
+      <button onClick={() => handleSocialLogin('github')}>
+        Sign in with GitHub
+      </button>
+      <button onClick={() => handleSocialLogin('discord')}>
+        Sign in with Discord
+      </button>
+    </div>
+  );
+}
+```
+
+</CodeGroup>
+
+<Info>
+  After successful authentication, users are redirected back to `WEB_URL` with session cookies set.
+</Info>
+
+## Magic Link Authentication
+
+Magic links provide passwordless authentication via email.
+
+### Request Magic Link
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-in/magic-link \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/sign-in/magic-link', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'user@example.com'
+  })
+});
+
+if (response.ok) {
+  console.log('Magic link sent! Check your email.');
+}
+```
+
+</CodeGroup>
+
+<Info>
+  Magic links are sent using [Resend](https://resend.com). Configure `RESEND_API_KEY` and `RESEND_FROM` in your `.env` file.
+</Info>
+
+## Bearer Token Authentication
+
+For API clients and mobile apps, use bearer tokens instead of cookies.
+
+### Get Bearer Token
+
+After signing in, request a bearer token:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/get-bearer-token \
+  -b cookies.txt
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/get-bearer-token', {
+  method: 'POST',
+  credentials: 'include'
+});
+
+const data = await response.json();
+const bearerToken = data.token;
+console.log('Bearer token:', bearerToken);
+```
+
+</CodeGroup>
+
+### Using Bearer Tokens
+
+Include the token in the `Authorization` header:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:40287/profile \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/profile', {
+  headers: {
+    'Authorization': `Bearer ${bearerToken}`
+  }
+});
+
+const data = await response.json();
+```
+
+```typescript TypeScript
+const apiClient = {
+  token: '',
+  
+  setToken(token: string) {
+    this.token = token;
+  },
+  
+  async fetch(url: string, options: RequestInit = {}) {
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
+  }
+};
+
+// Use it
+apiClient.setToken('your-bearer-token');
+const response = await apiClient.fetch('http://localhost:40287/profile');
+```
+
+</CodeGroup>
+
+<Warning>
+  Store bearer tokens securely. Never expose them in client-side code or version control.
+</Warning>
+
+## Session Management
+
+TrackGeek uses custom session management powered by Better Auth.
+
+### Get Current Session
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:40287/auth/get-session \
+  -b cookies.txt
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/get-session', {
+  credentials: 'include'
+});
+
+const data = await response.json();
+console.log('Current user:', data.user);
+console.log('Session expires:', data.session.expiresAt);
+```
+
+</CodeGroup>
+
+### Session Response
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "username": "johndoe",
+    "emailVerified": true,
+    "image": "https://avatar.url",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "profile": {
+      "bio": "Anime enthusiast",
+      "timezone": "America/New_York",
+      "avatarUrl": "https://avatar.url",
+      "bannerUrl": null,
+      "color": "#3B82F6"
+    }
+  },
+  "session": {
+    "id": "session-uuid",
+    "userId": "uuid",
+    "expiresAt": "2024-02-01T00:00:00.000Z"
+  }
+}
+```
+
+## Protected Routes
+
+Protected endpoints require authentication. The API uses NestJS guards to enforce authentication:
+
+```typescript src/modules/profile/profile.controller.ts
+@Controller("profile")
+@UseGuards(AuthGuard)
+export class ProfileController {
+  @Patch()
+  async updateProfile(@Session() session: UserSession, @Body() body: UpdateProfileDto) {
+    await this.profileService.updateProfile({
+      ...body,
+      userId: session.user.id,
+    });
+  }
+}
+```
+
+### Example: Making Authenticated Requests
+
+<CodeGroup>
+
+```javascript Cookies
+// Browser - cookies are sent automatically
+const response = await fetch('http://localhost:40287/profile', {
+  method: 'PATCH',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ bio: 'Updated bio' })
+});
+```
+
+```javascript Bearer Token
+// API Client - use bearer token
+const response = await fetch('http://localhost:40287/profile', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${bearerToken}`
+  },
+  body: JSON.stringify({ bio: 'Updated bio' })
+});
+```
+
+</CodeGroup>
+
+## Mobile App Authentication
+
+For mobile apps (iOS/Android), TrackGeek supports custom URL schemes for OAuth callbacks:
+
+```typescript src/modules/auth/config/auth.config.ts
+trustedOrigins: [
+  configService.get<string>("WEB_URL"),
+  "com.trackgeek.net.mobile.ios://auth/callback",
+  "com.trackgeek.net.mobile.android://auth/callback",
+  "trackgeek://callback",
+]
+```
+
+<Info>
+  Configure these URL schemes in your mobile app to handle OAuth redirects.
+</Info>
+
+## Security Best Practices
+
+<Steps>
+  <Step title="Use HTTPS in Production">
+    Always use HTTPS for production deployments to protect credentials and session tokens.
+  </Step>
+  
+  <Step title="Secure Token Storage">
+    - Browser: Use `httpOnly` cookies (handled automatically)
+    - Mobile: Use secure storage (Keychain, KeyStore)
+    - Never store tokens in localStorage or plain text
+  </Step>
+  
+  <Step title="Implement CORS Properly">
+    Configure `WEB_URL` to only allow trusted origins:
+    ```typescript
+    cors: {
+      origin: process.env.WEB_URL,
+      credentials: true,
+    }
+    ```
+  </Step>
+  
+  <Step title="Rotate Secrets Regularly">
+    Change `BETTER_AUTH_SECRET` periodically and after any security incidents.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized errors">
+    - Verify session cookies are being sent with `credentials: 'include'`
+    - Check that bearer token is correctly formatted in Authorization header
+    - Ensure session hasn't expired
+  </Accordion>
+  
+  <Accordion title="CORS errors">
+    - Verify `WEB_URL` matches your frontend origin
+    - Ensure `credentials: 'include'` is set in fetch requests
+    - Check that `withCredentials: true` is set for axios
+  </Accordion>
+  
+  <Accordion title="Social login not working">
+    - Verify OAuth credentials are correct
+    - Check callback URLs match exactly
+    - Ensure social provider is enabled in their console
+    - Review redirect URIs in provider settings
+  </Accordion>
+  
+  <Accordion title="Magic links not sending">
+    - Verify `RESEND_API_KEY` is valid
+    - Check `RESEND_FROM` email is verified
+    - Review email logs in Resend dashboard
+    - Ensure email queue is processing (BullMQ + Redis)
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api/anime">
+    Explore all authenticated endpoints
+  </Card>
+  <Card title="User Profiles" icon="user" href="/api/profiles">
+    Learn about profile customization
+  </Card>
+  <Card title="Media Tracking" icon="film" href="/concepts/media-tracking">
+    Start tracking anime, games, and more
+  </Card>
+  <Card title="Social Features" icon="users" href="/concepts/social-features">
+    Discover followers and feed events
+  </Card>
+</CardGroup>

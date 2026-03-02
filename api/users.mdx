@@ -1,0 +1,138 @@
+---
+title: "Users"
+description: "Endpoints for managing user relationships and following/unfollowing users"
+---
+
+## Follow User
+
+<Info>
+  This endpoint requires authentication. The authenticated user will follow the specified user.
+</Info>
+
+```http
+POST /user/follow/:followingId
+```
+
+Follow another user to see their activity in your feed.
+
+### Path Parameters
+
+<ParamField path="followingId" type="string" required>
+  The UUID of the user to follow
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code (200 for success)
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST 'https://api.trackgeek.com/user/follow/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+---
+
+## Unfollow User
+
+<Info>
+  This endpoint requires authentication. The authenticated user will unfollow the specified user.
+</Info>
+
+```http
+POST /user/unfollow/:unfollowId
+```
+
+Unfollow a user to stop seeing their activity in your feed.
+
+### Path Parameters
+
+<ParamField path="unfollowId" type="string" required>
+  The UUID of the user to unfollow
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code (200 for success)
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST 'https://api.trackgeek.com/user/unfollow/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+---
+
+## User Model
+
+The User model contains the following fields:
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's display name
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's email address
+</ResponseField>
+
+<ResponseField name="emailVerified" type="boolean">
+  Whether the email has been verified (default: false)
+</ResponseField>
+
+<ResponseField name="image" type="string">
+  URL to user's profile image (optional)
+</ResponseField>
+
+<ResponseField name="username" type="string">
+  Unique username (optional)
+</ResponseField>
+
+<ResponseField name="displayUsername" type="string">
+  Display version of username (optional)
+</ResponseField>
+
+<ResponseField name="role" type="UserRole">
+  User role: `User`, `Moderator`, or `Administrator` (default: User)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of account creation
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of last update
+</ResponseField>

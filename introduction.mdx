@@ -1,0 +1,152 @@
+---
+title: Introduction
+description: Welcome to TrackGeek API - A unified media tracking platform with progress tracking, statistics, and social features
+---
+
+<img
+  className="block dark:hidden"
+  src="https://github.com/TrackGeek.png"
+  alt="TrackGeek Logo"
+  height="100"
+/>
+<img
+  className="hidden dark:block"
+  src="https://github.com/TrackGeek.png"
+  alt="TrackGeek Logo"
+  height="100"
+/>
+
+# Welcome to TrackGeek API
+
+TrackGeek is a RESTful API for a unified media tracking platform that lets users track games, anime, movies, TV shows, books, and manga with an advanced progress system, social features, and seamless authentication.
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get up and running with TrackGeek API in minutes with your first authenticated request
+  </Card>
+  <Card
+    title="Authentication"
+    icon="lock"
+    href="/authentication"
+  >
+    Learn about Better Auth integration, social providers, and session management
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api/anime"
+  >
+    Explore all available endpoints with interactive examples
+  </Card>
+  <Card
+    title="GitHub Repository"
+    icon="github"
+    href="https://github.com/TrackGeek/api"
+  >
+    View the source code, contribute, and report issues
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={3}>
+  <Card
+    title="Media Tracking"
+    icon="film"
+  >
+    Track games, anime, movies, TV shows, books, and manga with detailed progress tracking and status management
+  </Card>
+  <Card
+    title="Social Features"
+    icon="users"
+  >
+    Follow users, share activity through feed events, comment, react, and build your community
+  </Card>
+  <Card
+    title="Custom Lists"
+    icon="list"
+  >
+    Create and manage custom lists to organize your media collections your way
+  </Card>
+  <Card
+    title="User Profiles"
+    icon="user"
+  >
+    Customize profiles with avatars, banners, colors, and timezone preferences
+  </Card>
+  <Card
+    title="Reviews & Ratings"
+    icon="star"
+  >
+    Write reviews, rate media, and share your opinions with the community
+  </Card>
+  <Card
+    title="Favorites System"
+    icon="heart"
+  >
+    Mark your favorite media and keep track of what matters most to you
+  </Card>
+</CardGroup>
+
+## Tech Stack
+
+TrackGeek API is built with modern, production-ready technologies:
+
+- **NestJS** - Progressive Node.js framework
+- **Prisma ORM** - Type-safe database access
+- **PostgreSQL** - Reliable data storage
+- **Redis** - High-performance caching
+- **Better Auth** - Modern authentication solution
+- **BullMQ** - Background job processing
+- **Swagger/OpenAPI** - Interactive API documentation
+
+## API Base URL
+
+The API is available at:
+
+```
+http://localhost:40287
+```
+
+<Note>
+  All API endpoints are prefixed with the base URL. Authentication endpoints are available at `/auth/*` and require proper configuration of social providers.
+</Note>
+
+## Rate Limiting
+
+The API implements rate limiting to ensure fair usage and system stability. Rate limits are applied per IP address and authenticated user.
+
+<Warning>
+  Exceeding rate limits will result in `429 Too Many Requests` responses. Implement proper retry logic with exponential backoff in your applications.
+</Warning>
+
+## Support
+
+Need help? Here's how to get support:
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/TrackGeek/api/issues)
+- **Documentation**: Browse through our comprehensive guides
+- **Contributing**: See `CONTRIBUTING.md` for contribution guidelines
+
+## Next Steps
+
+<Steps>
+  <Step title="Complete the Quickstart">
+    Follow our [quickstart guide](/quickstart) to make your first API request
+  </Step>
+  <Step title="Set Up Authentication">
+    Configure [authentication](/authentication) with your preferred social providers
+  </Step>
+  <Step title="Explore the API">
+    Browse the [API Reference](/api/anime) to discover all available endpoints
+  </Step>
+  <Step title="Build Your App">
+    Start building your media tracking application with TrackGeek
+  </Step>
+</Steps>

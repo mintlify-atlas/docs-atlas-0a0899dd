@@ -1,0 +1,434 @@
+---
+title: 'Caching'
+description: 'Learn how TrackGeek API uses Redis-based caching to improve performance and reduce latency'
+---
+
+## Overview
+
+The TrackGeek API implements a Redis-based caching layer to improve response times and reduce load on the database and external services. The caching service provides a simple interface for storing, retrieving, and managing cached data.
+
+## Cache Service
+
+The `CacheService` is a global service that wraps Redis operations with a type-safe interface. It's available throughout the application for caching any serializable data.
+
+### Core Methods
+
+#### Set Cache
+
+```typescript
+async set<T>(key: string, data: T, exp: number = 180): Promise<void>
+```
+
+Stores data in the cache with an optional expiration time.
+
+**Parameters:**
+- `key`: Unique identifier for the cached data
+- `data`: Any serializable data (will be JSON stringified)
+- `exp`: Time-to-live in seconds (default: 180 seconds / 3 minutes)
+
+**Example:**
+
+```typescript
+// Cache user profile for 5 minutes
+await cacheService.set('user:123:profile', userProfile, 300);
+
+// Cache with default TTL (3 minutes)
+await cacheService.set('game:456:details', gameDetails);
+```
+
+#### Get Cache
+
+```typescript
+async get<T>(key: string): Promise<T | null>
+```
+
+Retrieves data from the cache. Returns `null` if the key doesn't exist or has expired.
+
+**Example:**
+
+```typescript
+const userProfile = await cacheService.get<UserProfile>('user:123:profile');
+
+if (!userProfile) {
+  // Cache miss - fetch from database
+  const profile = await database.findUserProfile(123);
+  await cacheService.set('user:123:profile', profile, 300);
+  return profile;
+}
+
+return userProfile;
+```
+
+<Info>
+The `get` method automatically pings Redis before fetching to ensure the connection is alive.
+</Info>
+
+#### Increment
+
+```typescript
+async increment(key: string, ttl?: number): Promise<number>
+```
+
+Atomically increments a numeric value. Useful for counters and rate limiting.
+
+**Parameters:**
+- `key`: Counter key
+- `ttl`: Optional TTL in seconds (set only when counter is created)
+
+**Example:**
+
+```typescript
+// Increment API call counter with 1-hour TTL
+const callCount = await cacheService.increment('api:user:123:calls', 3600);
+
+if (callCount > 100) {
+  throw new Error('Rate limit exceeded');
+}
+```
+
+<Note>
+The TTL is only set when the counter is first created (value === 1). Subsequent increments don't reset the TTL.
+</Note>
+
+#### Get TTL
+
+```typescript
+async getTTL(key: string): Promise<number>
+```
+
+Returns the remaining time-to-live for a key in seconds.
+
+**Example:**
+
+```typescript
+const remainingTime = await cacheService.getTTL('user:123:session');
+console.log(`Session expires in ${remainingTime} seconds`);
+```
+
+#### Set with Expiry
+
+```typescript
+async setWithExpiry(key: string, value: string, seconds: number): Promise<void>
+```
+
+Sets a string value with expiration. Similar to `set()` but specifically for string values.
+
+**Example:**
+
+```typescript
+// Store session token for 1 hour
+await cacheService.setWithExpiry('session:abc123', 'user-id-456', 3600);
+```
+
+#### Check Existence
+
+```typescript
+async exists(key: string): Promise<boolean>
+```
+
+Checks if a key exists in the cache.
+
+**Example:**
+
+```typescript
+if (await cacheService.exists('user:123:profile')) {
+  console.log('Profile is cached');
+}
+```
+
+#### Delete
+
+```typescript
+async delete(key: string): Promise<void>
+```
+
+Removes a key from the cache.
+
+**Example:**
+
+```typescript
+// Invalidate cache when user updates profile
+await cacheService.delete('user:123:profile');
+```
+
+## Cache Key Patterns
+
+The API uses structured cache keys to organize cached data. Following a consistent naming convention helps manage and invalidate cache entries.
+
+### Recommended Key Structure
+
+```
+{resource}:{id}:{type}
+```
+
+**Examples:**
+
+```typescript
+// User-related caches
+'user:123:profile'
+'user:123:preferences'
+'user:123:followers'
+
+// Content caches
+'game:456:details'
+'game:456:reviews'
+'movie:789:metadata'
+
+// List caches
+'list:popular-games:results'
+'list:trending-movies:results'
+
+// Rate limiting
+'ratelimit:user:123:read'
+'ratelimit:user:123:write'
+```
+
+<Warning>
+Use clear, descriptive cache keys. Avoid generic names like `data` or `cache` that make debugging difficult.
+</Warning>
+
+## Cache Key Configuration
+
+For better organization, define cache keys with their expiration times:
+
+```typescript
+export interface CacheKeys {
+  [key: string]: {
+    prefix: (...args: any[]) => string;
+    expiration: number;
+  };
+}
+
+// Example usage
+const CACHE_KEYS = {
+  USER_PROFILE: {
+    prefix: (userId: string) => `user:${userId}:profile`,
+    expiration: 300 // 5 minutes
+  },
+  GAME_DETAILS: {
+    prefix: (gameId: string) => `game:${gameId}:details`,
+    expiration: 3600 // 1 hour
+  },
+  TRENDING_GAMES: {
+    prefix: () => 'list:trending-games',
+    expiration: 600 // 10 minutes
+  }
+};
+
+// Usage
+const key = CACHE_KEYS.USER_PROFILE.prefix('123');
+const ttl = CACHE_KEYS.USER_PROFILE.expiration;
+await cacheService.set(key, profile, ttl);
+```
+
+## Common Caching Patterns
+
+### Cache-Aside (Lazy Loading)
+
+Most common pattern - check cache first, then load from database if needed:
+
+<CodeGroup>
+
+```typescript Service Method
+async function getUserProfile(userId: string) {
+  const cacheKey = `user:${userId}:profile`;
+  
+  // Try to get from cache
+  const cached = await cacheService.get<UserProfile>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
+  // Cache miss - fetch from database
+  const profile = await database.user.findUnique({
+    where: { id: userId }
+  });
+  
+  if (!profile) {
+    throw new NotFoundException('User not found');
+  }
+  
+  // Store in cache for 5 minutes
+  await cacheService.set(cacheKey, profile, 300);
+  
+  return profile;
+}
+```
+
+```typescript With Decorator
+@Injectable()
+export class GameService {
+  constructor(private cacheService: CacheService) {}
+  
+  async getGameDetails(gameId: string) {
+    return this.getCachedOrFetch(
+      `game:${gameId}:details`,
+      () => this.fetchGameFromDatabase(gameId),
+      600 // 10 minutes
+    );
+  }
+  
+  private async getCachedOrFetch<T>(
+    key: string,
+    fetchFn: () => Promise<T>,
+    ttl: number
+  ): Promise<T> {
+    const cached = await this.cacheService.get<T>(key);
+    if (cached) return cached;
+    
+    const data = await fetchFn();
+    await this.cacheService.set(key, data, ttl);
+    return data;
+  }
+}
+```
+
+</CodeGroup>
+
+### Write-Through Cache
+
+Update cache when data is written to the database:
+
+```typescript
+async function updateUserProfile(userId: string, updates: ProfileUpdate) {
+  // Update database
+  const updated = await database.user.update({
+    where: { id: userId },
+    data: updates
+  });
+  
+  // Update cache
+  const cacheKey = `user:${userId}:profile`;
+  await cacheService.set(cacheKey, updated, 300);
+  
+  return updated;
+}
+```
+
+### Cache Invalidation
+
+Remove stale cache entries when data changes:
+
+```typescript
+async function deleteGame(gameId: string) {
+  // Delete from database
+  await database.game.delete({ where: { id: gameId } });
+  
+  // Invalidate related caches
+  await Promise.all([
+    cacheService.delete(`game:${gameId}:details`),
+    cacheService.delete(`game:${gameId}:reviews`),
+    cacheService.delete(`game:${gameId}:ratings`)
+  ]);
+}
+```
+
+### Rate Limiting with Cache
+
+```typescript
+async function checkRateLimit(userId: string, limit: number, window: number) {
+  const key = `ratelimit:${userId}:${Date.now() / window | 0}`;
+  const count = await cacheService.increment(key, window);
+  
+  if (count > limit) {
+    throw new RateLimitException();
+  }
+}
+```
+
+## Default TTL Values
+
+| Cache Type | Recommended TTL | Reason |
+|------------|-----------------|--------|
+| User profiles | 5-10 minutes | Balances freshness with performance |
+| Static content | 1-24 hours | Rarely changes |
+| External API data | 10-60 minutes | Reduces external API calls |
+| Search results | 5-15 minutes | Results change frequently |
+| Session data | 30-60 minutes | Security consideration |
+| Rate limit counters | Match rate limit window | Sync with throttler config |
+
+<Info>
+The default TTL in the `CacheService` is **180 seconds (3 minutes)**. Always specify an appropriate TTL based on your data's volatility.
+</Info>
+
+## Best Practices
+
+### 1. Always Set Expiration Times
+
+```typescript
+// Bad - data never expires
+await cacheService.set(key, data, Infinity);
+
+// Good - data expires after 5 minutes
+await cacheService.set(key, data, 300);
+```
+
+### 2. Handle Cache Failures Gracefully
+
+```typescript
+try {
+  const cached = await cacheService.get<GameData>(key);
+  if (cached) return cached;
+} catch (error) {
+  // Log error but don't fail the request
+  console.error('Cache error:', error);
+}
+
+// Always fetch from database as fallback
+return await database.game.findUnique({ where: { id } });
+```
+
+### 3. Cache Complex Queries
+
+```typescript
+// Cache expensive database queries
+const cacheKey = 'analytics:top-rated-games';
+const cached = await cacheService.get(cacheKey);
+
+if (!cached) {
+  const topGames = await database.game.findMany({
+    where: { averageRating: { gte: 4.5 } },
+    include: { reviews: true, ratings: true },
+    orderBy: { averageRating: 'desc' },
+    take: 50
+  });
+  
+  await cacheService.set(cacheKey, topGames, 600);
+  return topGames;
+}
+
+return cached;
+```
+
+### 4. Invalidate Related Caches
+
+```typescript
+// When a review is added, invalidate game cache
+async function addReview(gameId: string, review: ReviewData) {
+  const newReview = await database.review.create({ data: review });
+  
+  // Invalidate related caches
+  await Promise.all([
+    cacheService.delete(`game:${gameId}:details`),
+    cacheService.delete(`game:${gameId}:reviews`),
+    cacheService.delete(`game:${gameId}:average-rating`)
+  ]);
+  
+  return newReview;
+}
+```
+
+<Warning>
+Over-caching can lead to stale data. Always consider the trade-off between performance and data freshness.
+</Warning>
+
+## Performance Considerations
+
+1. **Cache Size**: Monitor Redis memory usage to prevent OOM errors
+2. **Serialization**: Large objects take longer to serialize/deserialize
+3. **Network Latency**: Redis is fast, but network calls still have overhead
+4. **Cache Stampede**: Use locking mechanisms for high-traffic cache misses
+
+## Implementation Reference
+
+The cache service is implemented at `src/shared/infra/cache/cache.service.ts:1-63` and uses the `@nestjs-redis/client` package for Redis integration.

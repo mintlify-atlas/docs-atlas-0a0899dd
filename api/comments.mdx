@@ -1,0 +1,297 @@
+---
+title: "Comments"
+description: "Endpoints for creating, retrieving, and deleting comments on various content types"
+---
+
+## Create Comment
+
+<Info>
+  This endpoint requires authentication. Creates a comment on anime, manga, TV shows, movies, games, books, or user profiles.
+</Info>
+
+```http
+POST /comment
+```
+
+Add a comment to various content types in TrackGeek.
+
+### Request Body
+
+<ParamField body="type" type="CommentType" required>
+  The type of content being commented on. Must be one of:
+  - `Anime`
+  - `Manga`
+  - `TVShow`
+  - `Movie`
+  - `Game`
+  - `Book`
+  - `Profile`
+</ParamField>
+
+<ParamField body="content" type="string" required>
+  The comment text (max 500 characters)
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the ID of the item being commented on. The required field depends on the `type`:
+  - For `Anime`: `{ "animeId": "uuid" }`
+  - For `Manga`: `{ "mangaId": "uuid" }`
+  - For `TVShow`: `{ "tvShowId": "uuid" }`
+  - For `Movie`: `{ "movieId": "uuid" }`
+  - For `Game`: `{ "gameId": "uuid" }`
+  - For `Book`: `{ "bookId": "uuid" }`
+  - For `Profile`: `{ "profileId": "uuid" }`
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+<Tabs>
+  <Tab title="Anime Comment">
+    ```bash
+    curl -X POST 'https://api.trackgeek.com/comment' \
+      -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "type": "Anime",
+        "content": "This anime is amazing! The animation quality is top-notch.",
+        "item": {
+          "animeId": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Profile Comment">
+    ```bash
+    curl -X POST 'https://api.trackgeek.com/comment' \
+      -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "type": "Profile",
+        "content": "Great taste in anime!",
+        "item": {
+          "profileId": "650e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+  </Tab>
+  <Tab title="Movie Comment">
+    ```bash
+    curl -X POST 'https://api.trackgeek.com/comment' \
+      -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "type": "Movie",
+        "content": "One of the best movies I've ever seen!",
+        "item": {
+          "movieId": "750e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+### Example Response
+
+```json
+{
+  "status": 201
+}
+```
+
+<Note>
+  Each user can only have one comment per item. If you try to create a duplicate comment, the request will fail.
+</Note>
+
+---
+
+## Get Comments
+
+```http
+GET /comment
+```
+
+Retrieve comments for a specific item with cursor-based pagination.
+
+### Query Parameters
+
+<ParamField query="type" type="CommentType" required>
+  The type of content to get comments for. Must be one of:
+  - `Anime`
+  - `Manga`
+  - `TVShow`
+  - `Movie`
+  - `Game`
+  - `Book`
+  - `Profile`
+</ParamField>
+
+<ParamField query="item" type="object" required>
+  Object containing the ID of the item. For example:
+  - For Anime: `item[animeId]=550e8400-e29b-41d4-a716-446655440000`
+  - For Profile: `item[profileId]=650e8400-e29b-41d4-a716-446655440000`
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Pagination cursor for getting the next page of results (optional)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="number">
+  Number of items to return per page (min: 1, max: 50, optional)
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X GET 'https://api.trackgeek.com/comment?type=Anime&item[animeId]=550e8400-e29b-41d4-a716-446655440000&itemsPerPage=20'
+```
+
+### Example Response
+
+```json
+{
+  "comments": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "content": "This anime is amazing!",
+      "type": "Anime",
+      "userId": "456e7890-e89b-12d3-a456-426614174000",
+      "animeId": "550e8400-e29b-41d4-a716-446655440000",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "user": {
+        "id": "456e7890-e89b-12d3-a456-426614174000",
+        "name": "John Doe",
+        "username": "johndoe",
+        "image": "https://example.com/avatar.jpg"
+      }
+    }
+  ],
+  "nextCursor": "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCJ9",
+  "hasNextPage": true
+}
+```
+
+### Response Fields
+
+<ResponseField name="comments" type="array">
+  Array of comment objects
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string">
+  Cursor for fetching the next page (null if no more pages)
+</ResponseField>
+
+<ResponseField name="hasNextPage" type="boolean">
+  Whether there are more comments to fetch
+</ResponseField>
+
+---
+
+## Delete Comment
+
+<Info>
+  This endpoint requires authentication. You can only delete your own comments.
+</Info>
+
+```http
+DELETE /comment/:commentId
+```
+
+Delete a comment by its ID.
+
+### Path Parameters
+
+<ParamField path="commentId" type="string" required>
+  The UUID of the comment to delete
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X DELETE 'https://api.trackgeek.com/comment/123e4567-e89b-12d3-a456-426614174000' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 204
+}
+```
+
+---
+
+## Comment Model
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="content" type="string">
+  The comment text (max 500 characters)
+</ResponseField>
+
+<ResponseField name="type" type="CommentType">
+  Type of content being commented on
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  ID of the user who created the comment
+</ResponseField>
+
+<ResponseField name="animeId" type="string">
+  ID of anime (if type is Anime)
+</ResponseField>
+
+<ResponseField name="mangaId" type="string">
+  ID of manga (if type is Manga)
+</ResponseField>
+
+<ResponseField name="tvShowId" type="string">
+  ID of TV show (if type is TVShow)
+</ResponseField>
+
+<ResponseField name="movieId" type="string">
+  ID of movie (if type is Movie)
+</ResponseField>
+
+<ResponseField name="gameId" type="string">
+  ID of game (if type is Game)
+</ResponseField>
+
+<ResponseField name="bookId" type="string">
+  ID of book (if type is Book)
+</ResponseField>
+
+<ResponseField name="profileId" type="string">
+  ID of profile (if type is Profile)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of comment creation
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of last update
+</ResponseField>
+
+## CommentType Enum
+
+The `CommentType` enum specifies what type of content is being commented on:
+
+- `Anime` - Comment on an anime
+- `Manga` - Comment on a manga
+- `TVShow` - Comment on a TV show
+- `Movie` - Comment on a movie
+- `Game` - Comment on a game
+- `Book` - Comment on a book
+- `Profile` - Comment on a user profile

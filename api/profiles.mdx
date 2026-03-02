@@ -1,0 +1,272 @@
+---
+title: "Profiles"
+description: "Endpoints for managing user profiles, including customization settings and media uploads"
+---
+
+## Update Profile
+
+<Info>
+  This endpoint requires authentication. Updates the profile settings for the authenticated user.
+</Info>
+
+```http
+PATCH /profile
+```
+
+Update profile customization settings including color theme, language, timezone, and about text.
+
+### Request Body
+
+<ParamField body="color" type="string" required>
+  Hex color code for profile theme (e.g., `#10b981`)
+</ParamField>
+
+<ParamField body="language" type="string" required>
+  Language code (e.g., `en-US`)
+</ParamField>
+
+<ParamField body="timezone" type="string">
+  IANA timezone identifier (e.g., `America/New_York`) (optional)
+</ParamField>
+
+<ParamField body="about" type="string">
+  About me text for the profile (optional, max 500 characters)
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X PATCH 'https://api.trackgeek.com/profile' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "color": "#10b981",
+    "language": "en-US",
+    "timezone": "America/New_York",
+    "about": "Anime and manga enthusiast!"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+---
+
+## Update Profile Avatar
+
+<Info>
+  This endpoint requires authentication. Uploads a new avatar image for the authenticated user's profile.
+</Info>
+
+```http
+PATCH /profile/avatar
+```
+
+Upload a new avatar image. Supported formats: JPG, JPEG, PNG, GIF. Maximum file size: 5MB.
+
+### Request Body
+
+<ParamField body="file" type="file" required>
+  Image file to upload as avatar
+</ParamField>
+
+### File Requirements
+
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`
+- Maximum file size: 5MB (5,242,880 bytes)
+- Content-Type must be `multipart/form-data`
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X PATCH 'https://api.trackgeek.com/profile/avatar' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+  -F 'file=@/path/to/avatar.jpg'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+<Note>
+  If the file type is not supported, you will receive an `IMAGE_TYPE_NOT_SUPPORTED` error.
+</Note>
+
+---
+
+## Delete Profile Avatar
+
+<Info>
+  This endpoint requires authentication. Removes the avatar image from the authenticated user's profile.
+</Info>
+
+```http
+DELETE /profile/avatar
+```
+
+Remove the current avatar image and revert to default.
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X DELETE 'https://api.trackgeek.com/profile/avatar' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+---
+
+## Update Profile Banner
+
+<Info>
+  This endpoint requires authentication. Uploads a new banner image for the authenticated user's profile.
+</Info>
+
+```http
+PATCH /profile/banner
+```
+
+Upload a new banner image for the profile header. Supported formats: JPG, JPEG, PNG, GIF. Maximum file size: 5MB.
+
+### Request Body
+
+<ParamField body="file" type="file" required>
+  Image file to upload as banner
+</ParamField>
+
+### File Requirements
+
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`
+- Maximum file size: 5MB (5,242,880 bytes)
+- Content-Type must be `multipart/form-data`
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X PATCH 'https://api.trackgeek.com/profile/banner' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN' \
+  -F 'file=@/path/to/banner.jpg'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+<Note>
+  If the file type is not supported, you will receive an `IMAGE_TYPE_NOT_SUPPORTED` error.
+</Note>
+
+---
+
+## Delete Profile Banner
+
+<Info>
+  This endpoint requires authentication. Removes the banner image from the authenticated user's profile.
+</Info>
+
+```http
+DELETE /profile/banner
+```
+
+Remove the current banner image from the profile.
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X DELETE 'https://api.trackgeek.com/profile/banner' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": 200
+}
+```
+
+---
+
+## Profile Model
+
+The Profile model contains the following customization fields:
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  Associated user ID (UUID)
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  Hex color code for profile theme (default: `#10b981`)
+</ResponseField>
+
+<ResponseField name="language" type="string">
+  Language code (default: `en-US`)
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+  IANA timezone identifier (optional)
+</ResponseField>
+
+<ResponseField name="about" type="string">
+  About me text (default: "Hello! I'm using TrackGeek.")
+</ResponseField>
+
+<ResponseField name="bannerUrl" type="string">
+  URL to banner image (optional)
+</ResponseField>
+
+<ResponseField name="avatarUrl" type="string">
+  URL to avatar image (optional)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of profile creation
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of last update
+</ResponseField>

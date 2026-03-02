@@ -1,0 +1,387 @@
+---
+title: 'Favorites'
+description: 'Manage user favorites for different types of media'
+---
+
+## Overview
+
+The Favorites API allows users to mark media items as favorites across different media types. Users can favorite anime, manga, TV shows, movies, games, and books to easily track and showcase their preferred content.
+
+### Favorite Types
+
+The `FavoriteType` enum defines the types of media that can be favorited:
+
+- `Anime` - Anime series and films
+- `Manga` - Manga series and one-shots
+- `TVShow` - Television shows
+- `Movie` - Films
+- `Game` - Video games
+- `Book` - Books
+
+<Note>
+  Each user can only have one favorite entry per media item. Attempting to favorite the same item twice will result in an error.
+</Note>
+
+## Add Favorite
+
+<Tabs>
+  <Tab title="Anime">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Anime",
+        "item": {
+          "animeId": "750e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Manga">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Manga",
+        "item": {
+          "mangaId": "850e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="TV Show">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "TVShow",
+        "item": {
+          "tvShowId": "950e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Movie">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Movie",
+        "item": {
+          "movieId": "a50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Game">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Game",
+        "item": {
+          "gameId": "b50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Book">
+    <CodeGroup>
+    ```bash POST /favorite
+    curl -X POST https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Book",
+        "item": {
+          "bookId": "c50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+Add a media item to the authenticated user's favorites.
+
+### Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Request Body
+
+<ParamField body="type" type="FavoriteType" required>
+  Type of the media item being favorited. Must be one of: `Anime`, `Manga`, `TVShow`, `Movie`, `Game`, or `Book`.
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the media item's ID. The field name depends on the type:
+  - For `Anime`: `{ "animeId": "uuid" }`
+  - For `Manga`: `{ "mangaId": "uuid" }`
+  - For `TVShow`: `{ "tvShowId": "uuid" }`
+  - For `Movie`: `{ "movieId": "uuid" }`
+  - For `Game`: `{ "gameId": "uuid" }`
+  - For `Book`: `{ "bookId": "uuid" }`
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code: `201` on success
+</ResponseField>
+
+---
+
+## Remove Favorite
+
+<Tabs>
+  <Tab title="Anime">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Anime",
+        "item": {
+          "animeId": "750e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Manga">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Manga",
+        "item": {
+          "mangaId": "850e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="TV Show">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "TVShow",
+        "item": {
+          "tvShowId": "950e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Movie">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Movie",
+        "item": {
+          "movieId": "a50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Game">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Game",
+        "item": {
+          "gameId": "b50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Book">
+    <CodeGroup>
+    ```bash DELETE /favorite
+    curl -X DELETE https://api.trackgeek.com/favorite \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Book",
+        "item": {
+          "bookId": "c50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+Remove a media item from the authenticated user's favorites.
+
+### Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Request Body
+
+<ParamField body="type" type="FavoriteType" required>
+  Type of the media item being unfavorited
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the media item's ID to remove from favorites. The field name depends on the type:
+  - For `Anime`: `{ "animeId": "uuid" }`
+  - For `Manga`: `{ "mangaId": "uuid" }`
+  - For `TVShow`: `{ "tvShowId": "uuid" }`
+  - For `Movie`: `{ "movieId": "uuid" }`
+  - For `Game`: `{ "gameId": "uuid" }`
+  - For `Book`: `{ "bookId": "uuid" }`
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code: `200` on success
+</ResponseField>
+
+---
+
+## Get User Favorites
+
+<CodeGroup>
+```bash GET /favorite/user/:userId
+curl -X GET "https://api.trackgeek.com/favorite/user/550e8400-e29b-41d4-a716-446655440000?page=1&itemsPerPage=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+Retrieve all favorites for a specific user with pagination support.
+
+### Path Parameters
+
+<ParamField path="userId" type="string" required>
+  UUID of the user whose favorites to retrieve
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number for pagination (starts at 1)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="integer">
+  Number of items per page. Must be between 1 and 50.
+</ParamField>
+
+### Response
+
+<ResponseField name="favorites" type="array">
+  Array of favorite objects
+  
+  <ResponseField name="id" type="string">
+    Unique identifier (UUID) of the favorite entry
+  </ResponseField>
+  
+  <ResponseField name="type" type="FavoriteType">
+    Type of the favorited media (Anime, Manga, TVShow, Movie, Game, or Book)
+  </ResponseField>
+  
+  <ResponseField name="userId" type="string">
+    UUID of the user who created this favorite
+  </ResponseField>
+  
+  <ResponseField name="animeId" type="string | null">
+    UUID of the anime (if type is Anime)
+  </ResponseField>
+  
+  <ResponseField name="mangaId" type="string | null">
+    UUID of the manga (if type is Manga)
+  </ResponseField>
+  
+  <ResponseField name="tvShowId" type="string | null">
+    UUID of the TV show (if type is TVShow)
+  </ResponseField>
+  
+  <ResponseField name="movieId" type="string | null">
+    UUID of the movie (if type is Movie)
+  </ResponseField>
+  
+  <ResponseField name="gameId" type="string | null">
+    UUID of the game (if type is Game)
+  </ResponseField>
+  
+  <ResponseField name="bookId" type="string | null">
+    UUID of the book (if type is Book)
+  </ResponseField>
+  
+  <ResponseField name="createdAt" type="string">
+    ISO 8601 timestamp when the favorite was created
+  </ResponseField>
+  
+  <ResponseField name="updatedAt" type="string">
+    ISO 8601 timestamp when the favorite was last updated
+  </ResponseField>
+</ResponseField>
+
+<Note>
+  Only one of the media ID fields (animeId, mangaId, etc.) will be populated based on the favorite's type.
+</Note>
+
+## Data Model
+
+### Favorite Constraints
+
+The Favorite model enforces unique constraints to prevent duplicate favorites:
+
+- A user can only favorite a specific anime once
+- A user can only favorite a specific manga once
+- A user can only favorite a specific TV show once
+- A user can only favorite a specific movie once
+- A user can only favorite a specific game once
+- A user can only favorite a specific book once
+
+### Relationships
+
+Favorites are linked to:
+- **User**: The user who created the favorite (cascade delete)
+- **Media Item**: The specific media item being favorited (cascade delete)

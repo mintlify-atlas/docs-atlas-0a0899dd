@@ -1,0 +1,742 @@
+---
+title: Review System
+description: Explore TrackGeek's comprehensive review system with media-specific rating categories, recommendations, and detailed feedback options
+---
+
+## Overview
+
+TrackGeek's review system allows users to provide detailed, structured feedback on media with category-specific ratings tailored to each media type. Each review includes an overall rating, optional category ratings, written feedback, and recommendation status.
+
+## Review Architecture
+
+### Common Features
+
+All review models share these characteristics:
+
+- **Unique Constraint**: One review per user per media item
+- **Overall Rating**: Required decimal rating (0-10)
+- **Category Ratings**: Optional decimal ratings (0-10) specific to media type
+- **Written Content**: Summary, notes, pros/cons, recommendations
+- **Timestamps**: Automatic `createdAt` and `updatedAt`
+
+### Rating Scale
+
+All ratings use a **0-10 decimal scale** for precision:
+
+```typescript
+@IsDecimal()
+@Max(10)
+@Min(0)
+readonly overall: number;
+```
+
+**Source**: `src/modules/anime-review/dtos/create-anime-review.dto.ts:4-7`
+
+<Note>
+  Decimal ratings allow for granular scores like 7.5, 8.3, etc., providing more nuanced reviews than integer scales.
+</Note>
+
+## Review Types by Media
+
+<Tabs>
+  <Tab title="Anime Reviews">
+    ### AnimeReview Model
+    
+    Anime reviews focus on animation-specific quality metrics.
+    
+    ```prisma
+    model AnimeReview {
+      id          String   @id @default(uuid())
+      overall     Decimal
+      story       Decimal?
+      characters  Decimal?
+      animation   Decimal?
+      sound       Decimal?
+      enjoyment   Decimal?
+      summary     String?
+      notes       String?
+      pros        String?
+      cons        String?
+      recommended Boolean?
+      userId      String
+      animeId     String
+      createdAt   DateTime @default(now())
+      updatedAt   DateTime @updatedAt
+
+      user  User  @relation(fields: [userId], references: [id])
+      anime Anime @relation(fields: [animeId], references: [id])
+
+      @@unique([userId, animeId])
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:734-756`
+    
+    ### Rating Categories
+    
+    <Accordion title="Story (0-10)">
+      Evaluates narrative quality, plot development, pacing, and storytelling.
+      
+      Consider:
+      - Plot coherence and originality
+      - Character arcs and development
+      - Pacing and narrative structure
+      - Theme execution
+    </Accordion>
+    
+    <Accordion title="Characters (0-10)">
+      Evaluates character design, development, and relationships.
+      
+      Consider:
+      - Character depth and growth
+      - Personality distinctiveness
+      - Relationship dynamics
+      - Voice acting performance
+    </Accordion>
+    
+    <Accordion title="Animation (0-10)">
+      Evaluates visual quality, art style, and animation fluidity.
+      
+      Consider:
+      - Art style and consistency
+      - Animation fluidity
+      - Action scene choreography
+      - Visual effects and cinematography
+    </Accordion>
+    
+    <Accordion title="Sound (0-10)">
+      Evaluates audio quality, music, sound effects, and voice acting.
+      
+      Consider:
+      - Opening/ending themes
+      - Background music (OST)
+      - Sound effect quality
+      - Voice acting performance
+    </Accordion>
+    
+    <Accordion title="Enjoyment (0-10)">
+      Subjective measure of personal enjoyment regardless of technical quality.
+      
+      Consider:
+      - Emotional impact
+      - Rewatchability
+      - Personal connection
+      - Entertainment value
+    </Accordion>
+    
+    ### Written Content
+    
+    | Field | Max Length | Description |
+    |-------|-----------|-------------|
+    | `summary` | 250 chars | Brief review summary |
+    | `pros` | 500 chars | Positive aspects |
+    | `cons` | 500 chars | Negative aspects |
+    | `notes` | 1000 chars | Additional thoughts |
+    
+    **DTO Validation** (`src/modules/anime-review/dtos/create-anime-review.dto.ts:39-53`):
+    ```typescript
+    @IsOptional()
+    @MaxLength(250)
+    readonly summary?: string;
+
+    @IsOptional()
+    @MaxLength(500)
+    readonly pros?: string;
+
+    @IsOptional()
+    @MaxLength(500)
+    readonly cons?: string;
+
+    @IsOptional()
+    @MaxLength(1000)
+    readonly notes?: string;
+    ```
+  </Tab>
+  
+  <Tab title="Manga Reviews">
+    ### MangaReview Model
+    
+    Manga reviews emphasize visual storytelling and worldbuilding.
+    
+    ```prisma
+    model MangaReview {
+      id            String   @id @default(uuid())
+      overall       Decimal
+      art           Decimal?
+      worldbuilding Decimal?
+      summary       String?
+      notes         String?
+      story         String?
+      characters    String?
+      recommended   Boolean?
+      userId        String
+      mangaId       String
+      createdAt     DateTime @default(now())
+      updatedAt     DateTime @updatedAt
+
+      user  User  @relation(fields: [userId], references: [id])
+      manga Manga @relation(fields: [mangaId], references: [id])
+
+      @@unique([userId, mangaId])
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:758-777`
+    
+    ### Rating Categories
+    
+    <Accordion title="Art (0-10)">
+      Evaluates visual art quality, panel composition, and character designs.
+      
+      Consider:
+      - Art style and detail
+      - Panel composition and flow
+      - Character design uniqueness
+      - Background art quality
+    </Accordion>
+    
+    <Accordion title="Worldbuilding (0-10)">
+      Evaluates setting development, lore, and world consistency.
+      
+      Consider:
+      - Setting depth and originality
+      - Lore and mythology
+      - World consistency
+      - Cultural elements
+    </Accordion>
+    
+    ### Written Content
+    
+    <Note>
+      Unlike anime, manga reviews use text fields for story and characters instead of decimal ratings, allowing more nuanced narrative feedback.
+    </Note>
+    
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `summary` | String | Brief review summary |
+    | `story` | String | Narrative analysis |
+    | `characters` | String | Character analysis |
+    | `notes` | String | Additional thoughts |
+  </Tab>
+  
+  <Tab title="TV Show Reviews">
+    ### TvShowReview Model
+    
+    TV show reviews focus on production quality and performance.
+    
+    ```prisma
+    model TvShowReview {
+      id          String   @id @default(uuid())
+      overall     Decimal
+      direction   Decimal?
+      production  Decimal?
+      acting      Decimal?
+      summary     String?
+      notes       String?
+      story       String?
+      recommended Boolean?
+      userId      String
+      tvShowId    String
+      createdAt   DateTime @default(now())
+      updatedAt   DateTime @updatedAt
+
+      user   User   @relation(fields: [userId], references: [id])
+      tvShow TvShow @relation(fields: [tvShowId], references: [id])
+
+      @@unique([userId, tvShowId])
+      @@map("TVShowReview")
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:779-799`
+    
+    ### Rating Categories
+    
+    <Accordion title="Direction (0-10)">
+      Evaluates directorial vision, episode pacing, and visual storytelling.
+      
+      Consider:
+      - Episode pacing and structure
+      - Cinematography and shot composition
+      - Directorial consistency
+      - Visual storytelling techniques
+    </Accordion>
+    
+    <Accordion title="Production (0-10)">
+      Evaluates production values, set design, costumes, and special effects.
+      
+      Consider:
+      - Set design and locations
+      - Costume design
+      - Visual/special effects
+      - Overall production quality
+    </Accordion>
+    
+    <Accordion title="Acting (0-10)">
+      Evaluates acting performances and character portrayals.
+      
+      Consider:
+      - Lead performances
+      - Supporting cast
+      - Chemistry between actors
+      - Character authenticity
+    </Accordion>
+  </Tab>
+  
+  <Tab title="Movie Reviews">
+    ### MovieReview Model
+    
+    Movie reviews use the same categories as TV shows (direction, production, acting).
+    
+    ```prisma
+    model MovieReview {
+      id          String   @id @default(uuid())
+      overall     Decimal
+      direction   Decimal?
+      production  Decimal?
+      acting      Decimal?
+      summary     String?
+      notes       String?
+      story       String?
+      recommended Boolean?
+      userId      String
+      movieId     String
+      createdAt   DateTime @default(now())
+      updatedAt   DateTime @updatedAt
+
+      user  User  @relation(fields: [userId], references: [id])
+      movie Movie @relation(fields: [movieId], references: [id])
+
+      @@unique([userId, movieId])
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:801-820`
+    
+    <Info>
+      Movie reviews share the same rating categories as TV shows since both are live-action visual media with similar production considerations.
+    </Info>
+  </Tab>
+  
+  <Tab title="Game Reviews">
+    ### GameReview Model
+    
+    Game reviews include gameplay-specific metrics and optional screenshots.
+    
+    ```prisma
+    model GameReview {
+      id          String   @id @default(uuid())
+      overall     Decimal
+      graphics    Decimal?
+      sound       Decimal?
+      story       Decimal?
+      gameplay    Decimal?
+      platform    String?
+      summary     String?
+      notes       String?
+      recommended Boolean?
+      screenshots String[] @default([])
+      userId      String
+      gameId      String
+      createdAt   DateTime @default(now())
+      updatedAt   DateTime @updatedAt
+
+      user Game @relation(fields: [userId], references: [id])
+      game Game @relation(fields: [gameId], references: [id])
+
+      @@unique([userId, gameId])
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:822-843`
+    
+    ### Rating Categories
+    
+    <Accordion title="Graphics (0-10)">
+      Evaluates visual quality, art direction, and technical performance.
+      
+      Consider:
+      - Visual fidelity and art style
+      - Animation quality
+      - Performance and frame rate
+      - Character and environment design
+    </Accordion>
+    
+    <Accordion title="Sound (0-10)">
+      Evaluates audio design, music, and voice acting.
+      
+      Consider:
+      - Soundtrack quality
+      - Sound effects
+      - Voice acting performance
+      - Audio mixing and immersion
+    </Accordion>
+    
+    <Accordion title="Story (0-10)">
+      Evaluates narrative quality, writing, and character development.
+      
+      Consider:
+      - Plot and narrative structure
+      - Character development
+      - Dialogue quality
+      - Worldbuilding and lore
+    </Accordion>
+    
+    <Accordion title="Gameplay (0-10)">
+      Evaluates mechanics, controls, and overall gameplay experience.
+      
+      Consider:
+      - Core mechanics and controls
+      - Game balance and difficulty
+      - Level design
+      - Innovation and fun factor
+    </Accordion>
+    
+    ### Unique Features
+    
+    <CardGroup cols={2}>
+      <Card title="Platform Tracking" icon="gamepad">
+        Optional `platform` field to specify which platform was played (PS5, PC, Xbox, Switch, etc.)
+      </Card>
+      <Card title="Screenshots" icon="camera">
+        Array of screenshot URLs to showcase gameplay moments
+      </Card>
+    </CardGroup>
+  </Tab>
+  
+  <Tab title="Book Reviews">
+    ### BookReview Model
+    
+    Book reviews focus on literary quality and thematic elements.
+    
+    ```prisma
+    model BookReview {
+      id          String   @id @default(uuid())
+      overall     Decimal
+      characters  Decimal?
+      language    Decimal?
+      theme       Decimal?
+      summary     String?
+      notes       String?
+      recommended Boolean?
+      userId      String
+      bookId      String
+      createdAt   DateTime @default(now())
+      updatedAt   DateTime @updatedAt
+
+      user User @relation(fields: [userId], references: [id])
+      book Book @relation(fields: [bookId], references: [id])
+
+      @@unique([userId, bookId])
+    }
+    ```
+    
+    **Source**: `prisma/schema.prisma:845-863`
+    
+    ### Rating Categories
+    
+    <Accordion title="Characters (0-10)">
+      Evaluates character depth, development, and relatability.
+      
+      Consider:
+      - Character complexity
+      - Character growth arcs
+      - Relationship dynamics
+      - Character authenticity
+    </Accordion>
+    
+    <Accordion title="Language (0-10)">
+      Evaluates writing quality, prose style, and literary technique.
+      
+      Consider:
+      - Prose quality and style
+      - Vocabulary and diction
+      - Writing technique
+      - Readability and flow
+    </Accordion>
+    
+    <Accordion title="Theme (0-10)">
+      Evaluates thematic depth, message clarity, and philosophical content.
+      
+      Consider:
+      - Thematic depth and complexity
+      - Message and meaning
+      - Philosophical elements
+      - Social commentary
+    </Accordion>
+  </Tab>
+</Tabs>
+
+## Recommendation System
+
+All review types include an optional `recommended` boolean field:
+
+```prisma
+recommended Boolean?
+```
+
+This allows users to give a clear yes/no recommendation independent of numerical ratings.
+
+<Accordion title="Recommendation Use Cases">
+  - **Positive but not recommended**: High technical quality but niche appeal
+  - **Negative but recommended**: Flawed but unique or important
+  - **No recommendation**: User is neutral or undecided
+</Accordion>
+
+## Review Creation Flow
+
+Review creation follows a consistent pattern across all media types:
+
+**Example from AnimeReviewService** (`src/modules/anime-review/anime-review.service.ts:20-60`):
+
+```typescript
+async createAnimeReview(createAnimeReviewDto: CreateAnimeReviewDto) {
+  const animeReview = await this.databaseService.animeReview.create({
+    data: {
+      overall: createAnimeReviewDto.overall,
+      story: createAnimeReviewDto.story,
+      characters: createAnimeReviewDto.characters,
+      animation: createAnimeReviewDto.animation,
+      sound: createAnimeReviewDto.sound,
+      enjoyment: createAnimeReviewDto.enjoyment,
+      summary: createAnimeReviewDto.summary,
+      pros: createAnimeReviewDto.pros,
+      cons: createAnimeReviewDto.cons,
+      notes: createAnimeReviewDto.notes,
+      recommended: createAnimeReviewDto.recommended,
+      animeId: createAnimeReviewDto.animeId,
+      userId: createAnimeReviewDto.userId,
+    },
+    include: {
+      anime: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profile: {
+            select: {
+              id: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  await this.queueService.toFeedEventQueue({
+    type: FeedEventType.NewReview,
+    userId: createAnimeReviewDto.userId,
+    metadata: { animeReview },
+  });
+}
+```
+
+### Flow Steps
+
+1. **Validation**: DTO validates all rating ranges (0-10) and string lengths
+2. **Creation**: Insert review with all provided fields
+3. **Relations**: Include media and user data in response
+4. **Feed Event**: Queue a `NewReview` event for follower feeds
+
+## Feed Event Integration
+
+Reviews trigger feed events to notify followers:
+
+**Feed Event Type** (`prisma/schema.prisma:235`):
+```prisma
+NewReview
+```
+
+The event metadata contains the full review object including:
+- All ratings (overall + categories)
+- Written content (summary, notes, pros/cons)
+- Recommendation status
+- Related media details
+- User information
+
+## Review Queries
+
+The review system supports various query patterns:
+
+### Get Reviews by Media
+
+**Example** (`src/modules/anime-review/anime-review.service.ts:90-118`):
+```typescript
+async getAnimeReviews(getAnimeReviewsDto: GetAnimeReviewsDto) {
+  const animeReviews = await this.databaseService.offsetPagination<AnimeReviewFindManyArgs>({
+    model: "animeReview",
+    itemsPerPage: getAnimeReviewsDto.itemsPerPage,
+    page: getAnimeReviewsDto.page,
+    where: {
+      animeId: getAnimeReviewsDto.animeId,
+      userId: getAnimeReviewsDto.userId,
+    },
+    include: {
+      anime: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profile: {
+            select: {
+              id: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return animeReviews;
+}
+```
+
+### Get Single Review
+
+**Example** (`src/modules/anime-review/anime-review.service.ts:62-88`):
+```typescript
+async getAnimeReviewById(animeReviewId: string) {
+  const animeReview = await this.databaseService.animeReview.findUnique({
+    where: { id: animeReviewId },
+    include: {
+      anime: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profile: {
+            select: {
+              id: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!animeReview) {
+    throw new AppException(ERROR_CODES.REVIEW_NOT_FOUND);
+  }
+
+  return animeReview;
+}
+```
+
+## Review Updates
+
+Users can update their reviews with authorization checks:
+
+**Example** (`src/modules/anime-review/anime-review.service.ts:120-149`):
+```typescript
+async updateAnimeReview(updateAnimeReviewDto: UpdateAnimeReviewDto) {
+  const animeReview = await this.databaseService.animeReview.findUnique({
+    where: {
+      id: updateAnimeReviewDto.animeReviewId,
+    },
+  });
+
+  if (!animeReview || animeReview.userId !== updateAnimeReviewDto.userId) {
+    throw new AppException(ERROR_CODES.REVIEW_NOT_FOUND);
+  }
+
+  await this.databaseService.animeReview.update({
+    where: {
+      id: animeReview.id,
+    },
+    data: {
+      overall: updateAnimeReviewDto.overall,
+      story: updateAnimeReviewDto.story,
+      characters: updateAnimeReviewDto.characters,
+      animation: updateAnimeReviewDto.animation,
+      sound: updateAnimeReviewDto.sound,
+      enjoyment: updateAnimeReviewDto.enjoyment,
+      summary: updateAnimeReviewDto.summary,
+      pros: updateAnimeReviewDto.pros,
+      cons: updateAnimeReviewDto.cons,
+      notes: updateAnimeReviewDto.notes,
+      recommended: updateAnimeReviewDto.recommended,
+    },
+  });
+}
+```
+
+<Note>
+  Updates verify that the review belongs to the requesting user before allowing modifications.
+</Note>
+
+## Review Deletion
+
+Deletion follows the same authorization pattern:
+
+**Example** (`src/modules/anime-review/anime-review.service.ts:151-166`):
+```typescript
+async deleteAnimeReview(deleteAnimeReviewDto: DeleteAnimeReviewDto) {
+  const animeReview = await this.databaseService.animeReview.findUnique({
+    where: {
+      id: deleteAnimeReviewDto.animeReviewId,
+    },
+  });
+
+  if (!animeReview || animeReview.userId !== deleteAnimeReviewDto.userId) {
+    throw new AppException(ERROR_CODES.REVIEW_NOT_FOUND);
+  }
+
+  await this.databaseService.animeReview.delete({
+    where: { id: animeReview.id },
+  });
+}
+```
+
+## Aggregate Statistics
+
+Reviews enable powerful aggregate statistics:
+
+<CardGroup cols={3}>
+  <Card title="Average Ratings" icon="star">
+    Calculate average overall and category ratings per media
+  </Card>
+  <Card title="Review Count" icon="hashtag">
+    Total number of reviews per media
+  </Card>
+  <Card title="Recommendation Rate" icon="thumbs-up">
+    Percentage of users who recommend the media
+  </Card>
+  <Card title="Rating Distribution" icon="chart-bar">
+    Histogram of rating ranges
+  </Card>
+  <Card title="Top Rated" icon="trophy">
+    Media sorted by highest average ratings
+  </Card>
+  <Card title="Most Reviewed" icon="comments">
+    Media with most review activity
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Require Overall" icon="exclamation">
+    Always require the overall rating; make category ratings optional
+  </Card>
+  <Card title="Validate Ranges" icon="check">
+    Enforce 0-10 range validation at DTO level
+  </Card>
+  <Card title="Character Limits" icon="text">
+    Set reasonable limits on text fields to encourage concise reviews
+  </Card>
+  <Card title="User Authorization" icon="lock">
+    Always verify review ownership before updates/deletes
+  </Card>
+  <Card title="Include Relations" icon="link">
+    Return media and user data with reviews for context
+  </Card>
+  <Card title="Feed Integration" icon="rss">
+    Queue feed events after successful review creation
+  </Card>
+</CardGroup>

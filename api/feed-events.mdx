@@ -1,0 +1,294 @@
+---
+title: "Feed Events"
+description: "Endpoints for retrieving activity feed events from the TrackGeek community"
+---
+
+## Get Global Feed Events
+
+```http
+GET /feed/global
+```
+
+Retrieve the global activity feed showing recent events from all users across TrackGeek. This endpoint does not require authentication.
+
+### Query Parameters
+
+<ParamField query="cursor" type="string">
+  Pagination cursor for getting the next page of results (optional)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="number">
+  Number of items to return per page (min: 1, max: 50, optional)
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X GET 'https://api.trackgeek.com/feed/global?itemsPerPage=20'
+```
+
+### Example Response
+
+```json
+{
+  "feedEvents": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "type": "NewWatch",
+      "userId": "456e7890-e89b-12d3-a456-426614174000",
+      "metadata": {
+        "animeId": "550e8400-e29b-41d4-a716-446655440000",
+        "animeTitle": "Attack on Titan",
+        "status": "Watching"
+      },
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "user": {
+        "id": "456e7890-e89b-12d3-a456-426614174000",
+        "name": "John Doe",
+        "username": "johndoe",
+        "image": "https://example.com/avatar.jpg"
+      }
+    },
+    {
+      "id": "234e5678-e89b-12d3-a456-426614174000",
+      "type": "NewReview",
+      "userId": "567e8901-e89b-12d3-a456-426614174000",
+      "metadata": {
+        "reviewId": "650e8400-e29b-41d4-a716-446655440000",
+        "animeTitle": "Demon Slayer",
+        "rating": 9.5
+      },
+      "createdAt": "2024-01-15T10:25:00.000Z",
+      "user": {
+        "id": "567e8901-e89b-12d3-a456-426614174000",
+        "name": "Jane Smith",
+        "username": "janesmith",
+        "image": "https://example.com/avatar2.jpg"
+      }
+    }
+  ],
+  "nextCursor": "eyJpZCI6IjIzNGU1Njc4LWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCJ9",
+  "hasNextPage": true
+}
+```
+
+### Response Fields
+
+<ResponseField name="feedEvents" type="array">
+  Array of feed event objects
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string">
+  Cursor for fetching the next page (null if no more pages)
+</ResponseField>
+
+<ResponseField name="hasNextPage" type="boolean">
+  Whether there are more feed events to fetch
+</ResponseField>
+
+---
+
+## Get User Feed Events
+
+<Info>
+  This endpoint requires authentication. Retrieves a personalized activity feed showing events from users you follow.
+</Info>
+
+```http
+GET /feed/user
+```
+
+Retrieve a personalized feed of activity from users you follow, showing their recent reviews, watches, favorites, and other activities.
+
+### Query Parameters
+
+<ParamField query="cursor" type="string">
+  Pagination cursor for getting the next page of results (optional)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="number">
+  Number of items to return per page (min: 1, max: 50, optional)
+</ParamField>
+
+### Authentication
+
+This endpoint requires a valid session token in the request headers.
+
+### Example Request
+
+```bash
+curl -X GET 'https://api.trackgeek.com/feed/user?itemsPerPage=20' \
+  -H 'Authorization: Bearer YOUR_SESSION_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "feedEvents": [
+    {
+      "id": "345e6789-e89b-12d3-a456-426614174000",
+      "type": "NewFavorite",
+      "userId": "456e7890-e89b-12d3-a456-426614174000",
+      "metadata": {
+        "favoriteType": "Anime",
+        "animeId": "550e8400-e29b-41d4-a716-446655440000",
+        "animeTitle": "Steins;Gate",
+        "animeImage": "https://example.com/anime.jpg"
+      },
+      "createdAt": "2024-01-15T11:00:00.000Z",
+      "user": {
+        "id": "456e7890-e89b-12d3-a456-426614174000",
+        "name": "John Doe",
+        "username": "johndoe",
+        "image": "https://example.com/avatar.jpg"
+      }
+    },
+    {
+      "id": "456e7890-e89b-12d3-a456-426614174000",
+      "type": "NewProgress",
+      "userId": "567e8901-e89b-12d3-a456-426614174000",
+      "metadata": {
+        "progressType": "Anime",
+        "animeTitle": "One Piece",
+        "status": "Watching",
+        "episode": 1050
+      },
+      "createdAt": "2024-01-15T10:55:00.000Z",
+      "user": {
+        "id": "567e8901-e89b-12d3-a456-426614174000",
+        "name": "Jane Smith",
+        "username": "janesmith",
+        "image": "https://example.com/avatar2.jpg"
+      }
+    }
+  ],
+  "nextCursor": "eyJpZCI6IjQ1NmU3ODkwLWU4OWItMTJkMy1hNDU2LTQyNjYxNDE3NDAwMCJ9",
+  "hasNextPage": true
+}
+```
+
+### Response Fields
+
+<ResponseField name="feedEvents" type="array">
+  Array of feed event objects from followed users
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string">
+  Cursor for fetching the next page (null if no more pages)
+</ResponseField>
+
+<ResponseField name="hasNextPage" type="boolean">
+  Whether there are more feed events to fetch
+</ResponseField>
+
+---
+
+## Feed Event Model
+
+<ResponseField name="id" type="string">
+  Unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="type" type="FeedEventType">
+  Type of activity event
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  ID of the user who performed the activity
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Additional data specific to the event type (JSON)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the event occurred
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  User information including name, username, and avatar
+</ResponseField>
+
+## FeedEventType Enum
+
+The `FeedEventType` enum specifies what type of activity occurred:
+
+- `NewFollower` - User gained a new follower
+- `NewFavorite` - User added a new favorite anime, manga, TV show, movie, game, or book
+- `NewList` - User created a new list
+- `NewListItem` - User added an item to a list
+- `NewReview` - User posted a new review
+- `NewWatch` - User started watching or completed anime, TV show, or movie
+- `NewProgress` - User updated their progress on content
+
+## Metadata Examples
+
+The `metadata` field contains different information depending on the event type:
+
+### NewWatch Event
+```json
+{
+  "animeId": "550e8400-e29b-41d4-a716-446655440000",
+  "animeTitle": "Attack on Titan",
+  "status": "Watching",
+  "episode": 15,
+  "season": 3
+}
+```
+
+### NewReview Event
+```json
+{
+  "reviewId": "650e8400-e29b-41d4-a716-446655440000",
+  "contentType": "Anime",
+  "contentTitle": "Demon Slayer",
+  "rating": 9.5,
+  "summary": "An amazing anime with incredible animation..."
+}
+```
+
+### NewFavorite Event
+```json
+{
+  "favoriteType": "Anime",
+  "animeId": "550e8400-e29b-41d4-a716-446655440000",
+  "animeTitle": "Steins;Gate",
+  "animeImage": "https://example.com/anime.jpg"
+}
+```
+
+### NewList Event
+```json
+{
+  "listId": "750e8400-e29b-41d4-a716-446655440000",
+  "listName": "Top 10 Sci-Fi Anime",
+  "listType": "Anime",
+  "description": "My favorite science fiction anime series"
+}
+```
+
+### NewProgress Event
+```json
+{
+  "progressType": "Manga",
+  "mangaId": "850e8400-e29b-41d4-a716-446655440000",
+  "mangaTitle": "One Piece",
+  "status": "Reading",
+  "chapter": 1050
+}
+```
+
+### NewFollower Event
+```json
+{
+  "followerId": "950e8400-e29b-41d4-a716-446655440000",
+  "followerName": "Mike Johnson",
+  "followerUsername": "mikej",
+  "followerImage": "https://example.com/avatar3.jpg"
+}
+```
+
+<Note>
+  The exact structure of the metadata field may vary depending on the event type and the content being referenced. Always check the `type` field to determine how to parse the metadata.
+</Note>

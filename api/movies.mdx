@@ -1,0 +1,413 @@
+---
+title: 'Movies'
+description: 'Search, retrieve, and refresh movie information from TMDB'
+---
+
+## Search Movies
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Search for movies by title or keywords.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/movie/search?query=inception" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/movie/search?query=inception', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.trackgeek.com/movie/search',
+    params={'query': 'inception'},
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="query" type="string" required>
+  Search query string. Must be at least 3 characters long.
+</ParamField>
+
+### Response
+
+<ResponseField name="movies" type="array">
+  Array of movie objects matching the search query.
+  
+  <Expandable title="movie object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="tmdbId" type="number">
+      The Movie Database (TMDB) ID
+    </ResponseField>
+    
+    <ResponseField name="imdbId" type="string">
+      IMDb ID
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Movie title
+    </ResponseField>
+    
+    <ResponseField name="originalTitle" type="string">
+      Original title in original language
+    </ResponseField>
+    
+    <ResponseField name="posterUrl" type="string">
+      Poster image URL
+    </ResponseField>
+    
+    <ResponseField name="backdropUrl" type="string">
+      Backdrop image URL
+    </ResponseField>
+    
+    <ResponseField name="overview" type="string">
+      Movie overview/synopsis
+    </ResponseField>
+    
+    <ResponseField name="releaseDate" type="string">
+      Release date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="runtime" type="number">
+      Runtime in minutes
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="popularity" type="number">
+      Popularity score
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "movies": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "tmdbId": 27205,
+      "imdbId": "tt1375666",
+      "title": "Inception",
+      "originalTitle": "Inception",
+      "posterUrl": "https://image.tmdb.org/t/p/original/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+      "backdropUrl": "https://image.tmdb.org/t/p/original/s3TBrRGB1iav7gFOCNx3H31MoES.jpg",
+      "overview": "Cobb, a skilled thief who commits corporate espionage...",
+      "releaseDate": "2010-07-16T00:00:00.000Z",
+      "runtime": 148,
+      "genres": [
+        { "id": 28, "name": "Action" },
+        { "id": 878, "name": "Science Fiction" }
+      ],
+      "popularity": 82
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+---
+
+## Get Movie Details
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Retrieve detailed information about a specific movie by its ID.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/movie/details/27205" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const movieId = 27205;
+const response = await fetch(`https://api.trackgeek.com/movie/details/${movieId}`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+movie_id = 27205
+response = requests.get(
+    f'https://api.trackgeek.com/movie/details/{movie_id}',
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="movieId" type="integer" required>
+  The unique movie identifier. Must be a valid integer.
+</ParamField>
+
+### Response
+
+<ResponseField name="movie" type="object">
+  Detailed movie information.
+  
+  <Expandable title="movie object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="tmdbId" type="number">
+      The Movie Database (TMDB) ID
+    </ResponseField>
+    
+    <ResponseField name="imdbId" type="string">
+      IMDb ID
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Movie title
+    </ResponseField>
+    
+    <ResponseField name="originalTitle" type="string">
+      Original title in original language
+    </ResponseField>
+    
+    <ResponseField name="originalLanguage" type="string">
+      Original language code (ISO 639-1)
+    </ResponseField>
+    
+    <ResponseField name="posterUrl" type="string">
+      Poster image URL
+    </ResponseField>
+    
+    <ResponseField name="backdropUrl" type="string">
+      Backdrop image URL
+    </ResponseField>
+    
+    <ResponseField name="overview" type="string">
+      Movie overview/synopsis
+    </ResponseField>
+    
+    <ResponseField name="releaseDate" type="string">
+      Release date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="runtime" type="number">
+      Runtime in minutes
+    </ResponseField>
+    
+    <ResponseField name="budget" type="number">
+      Production budget in USD
+    </ResponseField>
+    
+    <ResponseField name="revenue" type="number">
+      Box office revenue in USD
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Release status (Released, Post Production, In Production, etc.)
+    </ResponseField>
+    
+    <ResponseField name="homepage" type="string">
+      Official homepage URL
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="productionCompanies" type="array">
+      Array of production company objects
+    </ResponseField>
+    
+    <ResponseField name="productionCountries" type="array">
+      Array of production country objects
+    </ResponseField>
+    
+    <ResponseField name="spokenLanguages" type="array">
+      Array of spoken language objects
+    </ResponseField>
+    
+    <ResponseField name="cast" type="array">
+      Array of cast member objects
+    </ResponseField>
+    
+    <ResponseField name="crew" type="array">
+      Array of crew member objects
+    </ResponseField>
+    
+    <ResponseField name="videos" type="array">
+      Array of video objects (trailers, teasers, etc.)
+    </ResponseField>
+    
+    <ResponseField name="belongsToCollection" type="object">
+      Collection information if part of a series
+    </ResponseField>
+    
+    <ResponseField name="popularity" type="number">
+      Popularity score
+    </ResponseField>
+    
+    <ResponseField name="lastRefreshedAt" type="string">
+      ISO 8601 timestamp of last data refresh
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "movie": {
+    "id": "770e8400-e29b-41d4-a716-446655440002",
+    "tmdbId": 27205,
+    "imdbId": "tt1375666",
+    "title": "Inception",
+    "originalTitle": "Inception",
+    "originalLanguage": "en",
+    "posterUrl": "https://image.tmdb.org/t/p/original/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+    "backdropUrl": "https://image.tmdb.org/t/p/original/s3TBrRGB1iav7gFOCNx3H31MoES.jpg",
+    "overview": "Cobb, a skilled thief who commits corporate espionage...",
+    "releaseDate": "2010-07-16T00:00:00.000Z",
+    "runtime": 148,
+    "budget": 160000000,
+    "revenue": 825532764,
+    "status": "Released",
+    "homepage": "https://www.warnerbros.com/movies/inception",
+    "genres": [
+      { "id": 28, "name": "Action" },
+      { "id": 878, "name": "Science Fiction" },
+      { "id": 53, "name": "Thriller" }
+    ],
+    "productionCompanies": [
+      { "id": 923, "name": "Legendary Pictures" },
+      { "id": 9996, "name": "Syncopy" }
+    ],
+    "cast": [
+      {
+        "id": 6193,
+        "name": "Leonardo DiCaprio",
+        "character": "Cobb",
+        "profilePath": "/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg"
+      }
+    ],
+    "popularity": 82,
+    "lastRefreshedAt": "2026-03-02T10:00:00.000Z",
+    "createdAt": "2026-01-15T08:30:00.000Z",
+    "updatedAt": "2026-03-02T10:00:00.000Z"
+  }
+}
+```
+
+</ResponseExample>
+
+---
+
+## Refresh Movie
+
+<Note>
+  This endpoint requires authentication. Include your API token in the Authorization header.
+</Note>
+
+Refresh movie data from TMDB to get the latest information.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.trackgeek.com/movie/refresh" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 27205
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/movie/refresh', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: 27205
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.trackgeek.com/movie/refresh',
+    headers={
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={'id': 27205}
+)
+```
+
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="id" type="integer" required>
+  The TMDB ID of the movie to refresh. Must be a valid integer.
+</ParamField>
+
+### Response
+
+Returns HTTP 200 on successful refresh with no body content.
+
+<ResponseExample>
+
+```json Success Response
+{}
+```
+
+</ResponseExample>

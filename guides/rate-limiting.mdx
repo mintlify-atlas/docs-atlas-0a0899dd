@@ -1,0 +1,163 @@
+---
+title: 'Rate Limiting'
+description: 'Learn how TrackGeek API implements rate limiting to protect server resources and ensure fair usage'
+---
+
+## Overview
+
+The TrackGeek API uses a dual-throttler approach to rate limit requests. Different limits apply to read operations (GET) and write operations (POST, PUT, PATCH, DELETE) to optimize for typical usage patterns.
+
+## Configuration
+
+Rate limiting is configured globally using NestJS Throttler with the following settings:
+
+```typescript
+ThrottlerModule.forRoot({
+  throttlers: [
+    { name: "read", ttl: 60_000, limit: 30, blockDuration: 300_000 },
+    { name: "write", ttl: 60_000, limit: 5, blockDuration: 300_000 },
+  ],
+})
+```
+
+### Read Throttler
+
+Applies to all **GET** requests:
+
+- **Limit**: 30 requests
+- **Time Window**: 60 seconds (60,000 milliseconds)
+- **Block Duration**: 5 minutes (300,000 milliseconds)
+
+### Write Throttler
+
+Applies to **POST**, **PUT**, **PATCH**, and **DELETE** requests:
+
+- **Limit**: 5 requests
+- **Time Window**: 60 seconds (60,000 milliseconds)
+- **Block Duration**: 5 minutes (300,000 milliseconds)
+
+<Warning>
+If you exceed the rate limit, your IP address will be blocked for 5 minutes. During this time, all requests will be rejected with a 429 status code.
+</Warning>
+
+## How It Works
+
+The API uses a custom `HttpThrottlerGuard` that automatically determines which throttler to apply based on the HTTP method:
+
+```typescript
+const WRITE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
+
+protected async handleRequest(requestProps: ThrottlerRequest): Promise<boolean> {
+  const { context, throttler } = requestProps;
+  
+  const request = context.switchToHttp().getRequest<{ method: string }>();
+  const method = request.method?.toUpperCase();
+  const isWriteMethod = WRITE_METHODS.includes(method);
+  
+  if (throttler.name === "read" && isWriteMethod) return true;
+  if (throttler.name === "write" && !isWriteMethod) return true;
+  
+  return super.handleRequest(requestProps);
+}
+```
+
+## Rate Limit Response
+
+When you exceed the rate limit, the API returns:
+
+```json
+{
+  "code": "RATE_LIMIT_EXCEEDED",
+  "status": 429
+}
+```
+
+## Best Practices
+
+<Note>
+**Optimize Your Requests**: Use pagination to fetch data in smaller chunks rather than requesting large datasets at once.
+</Note>
+
+### Rate Limit Strategy
+
+1. **Cache responses** on your client to minimize redundant API calls
+2. **Batch operations** when possible to stay within write limits
+3. **Implement exponential backoff** when you receive 429 responses
+4. **Monitor your usage** to stay well below the limits
+
+### Example: Handling Rate Limits
+
+<CodeGroup>
+
+```typescript TypeScript
+async function fetchWithRetry(url: string, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url);
+      
+      if (response.status === 429) {
+        const retryAfter = 300; // 5 minutes in seconds
+        console.log(`Rate limited. Waiting ${retryAfter} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+    }
+  }
+}
+```
+
+```javascript JavaScript
+async function fetchWithRetry(url, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url);
+      
+      if (response.status === 429) {
+        const retryAfter = 300; // 5 minutes in seconds
+        console.log(`Rate limited. Waiting ${retryAfter} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+    }
+  }
+}
+```
+
+```python Python
+import time
+import requests
+
+def fetch_with_retry(url, max_retries=3):
+    for i in range(max_retries):
+        try:
+            response = requests.get(url)
+            
+            if response.status_code == 429:
+                retry_after = 300  # 5 minutes in seconds
+                print(f"Rate limited. Waiting {retry_after} seconds...")
+                time.sleep(retry_after)
+                continue
+            
+            return response
+        except Exception as e:
+            if i == max_retries - 1:
+                raise e
+```
+
+</CodeGroup>
+
+<Info>
+The block duration starts from the time you first exceed the limit, not from your last request. Wait the full 5 minutes before retrying.
+</Info>
+
+## Rate Limit Headers
+
+The API does not currently expose rate limit information in response headers. Monitor your request patterns and implement client-side tracking to stay within limits.

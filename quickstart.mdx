@@ -1,80 +1,418 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with TrackGeek API in minutes - from installation to your first authenticated request
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through setting up the TrackGeek API locally and making your first authenticated request.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+Before you begin, ensure you have the following installed:
 
-### Step 2: Deploy your changes
+- **Node.js** (v18 or higher)
+- **Docker** and Docker Compose
+- **Git**
+- **PostgreSQL** (via Docker)
+- **Redis** (via Docker)
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+## Installation
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/TrackGeek/api.git
+    cd api
+    ```
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
 
-### Step 3: Go live
+  <Step title="Set up environment variables">
+    Copy the example environment file and configure it:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    ```bash
+    cp .env.example .env
+    ```
 
-## Next steps
+    Update the `.env` file with your configuration:
 
-Now that you have your docs running, explore these key features:
+    ```bash .env
+    # SERVER
+    PORT=40287
+
+    # DATABASE
+    DATABASE_URL='postgresql://user:password@localhost:5432/trackgeek'
+
+    # CACHE
+    REDIS_URL='redis://localhost:6379'
+
+    # AUTH
+    BETTER_AUTH_URL='http://localhost:40287'
+    BETTER_AUTH_SECRET='your-secret-key-here'
+    WEB_URL='http://localhost:5173'
+
+    # Social Providers (Optional - configure only what you need)
+    GOOGLE_CLIENT_ID=''
+    GOOGLE_CLIENT_SECRET=''
+    DISCORD_CLIENT_ID=''
+    DISCORD_CLIENT_SECRET=''
+    GITHUB_CLIENT_ID=''
+    GITHUB_CLIENT_SECRET=''
+
+    # EMAIL
+    RESEND_API_KEY=''
+    RESEND_FROM=''
+
+    # INTEGRATIONS
+    IMGBB_API_KEY=''
+    HARDCOVER_API_KEY=''
+    TMDB_API_KEY=''
+    IGDB_CLIENT_ID=''
+    IGDB_CLIENT_SECRET=''
+    ```
+
+    <Note>
+      Generate a secure random string for `BETTER_AUTH_SECRET` using: `openssl rand -base64 32`
+    </Note>
+  </Step>
+
+  <Step title="Start Docker containers">
+    Start PostgreSQL and Redis:
+
+    ```bash
+    docker compose up -d
+    ```
+  </Step>
+
+  <Step title="Run database migrations">
+    Set up the database schema:
+
+    ```bash
+    npm run prisma:migrate
+    npm run prisma:generate
+    ```
+  </Step>
+
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+
+    You should see:
+
+    ```
+    Server is running on http://localhost:40287
+    API documentation available at http://localhost:40287/docs
+    ```
+  </Step>
+</Steps>
+
+## Your First Request
+
+Now that the API is running, let's make some requests!
+
+### Search for Anime (Public Endpoint)
+
+Some endpoints don't require authentication. Let's search for anime:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:40287/anime/search?q=naruto
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/anime/search?q=naruto');
+const data = await response.json();
+console.log(data.animes);
+```
+
+```python Python
+import requests
+
+response = requests.get('http://localhost:40287/anime/search', params={'q': 'naruto'})
+data = response.json()
+print(data['animes'])
+```
+
+</CodeGroup>
+
+### Create an Account
+
+To access protected endpoints, you need to authenticate. Let's create an account:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-up/email \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "name": "John Doe"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/sign-up/email', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123',
+    name: 'John Doe'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+session = requests.Session()
+
+response = session.post(
+    'http://localhost:40287/auth/sign-up/email',
+    json={
+        'email': 'user@example.com',
+        'password': 'securePassword123',
+        'name': 'John Doe'
+    }
+)
+
+data = response.json()
+print(data)
+```
+
+</CodeGroup>
+
+<Info>
+  The sign-up endpoint automatically creates a user profile with a generated username. Session cookies are set automatically for subsequent requests.
+</Info>
+
+### Sign In
+
+If you already have an account, sign in to get your session:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:40287/auth/sign-in/email \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/auth/sign-in/email', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+console.log(data.user);
+```
+
+```python Python
+import requests
+
+session = requests.Session()
+
+response = session.post(
+    'http://localhost:40287/auth/sign-in/email',
+    json={
+        'email': 'user@example.com',
+        'password': 'securePassword123'
+    }
+)
+
+data = response.json()
+print(data['user'])
+```
+
+</CodeGroup>
+
+### Make an Authenticated Request
+
+Now that you're authenticated, let's update your profile:
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH http://localhost:40287/profile \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "Anime enthusiast and gamer",
+    "timezone": "America/New_York"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/profile', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    bio: 'Anime enthusiast and gamer',
+    timezone: 'America/New_York'
+  })
+});
+
+if (response.ok) {
+  console.log('Profile updated successfully!');
+}
+```
+
+```python Python
+# Using the same session from sign-in
+response = session.patch(
+    'http://localhost:40287/profile',
+    json={
+        'bio': 'Anime enthusiast and gamer',
+        'timezone': 'America/New_York'
+    }
+)
+
+if response.status_code == 200:
+    print('Profile updated successfully!')
+```
+
+</CodeGroup>
+
+### Get Anime Details
+
+Fetch detailed information about a specific anime:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:40287/anime/details/1535
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:40287/anime/details/1535');
+const data = await response.json();
+console.log(data.anime);
+```
+
+```python Python
+response = requests.get('http://localhost:40287/anime/details/1535')
+data = response.json()
+print(data['anime'])
+```
+
+</CodeGroup>
+
+## Response Format
+
+All successful responses return JSON with a consistent structure:
+
+```json Success Response
+{
+  "anime": {
+    "id": 1535,
+    "title": "Death Note",
+    "synopsis": "...",
+    "status": "finished_airing",
+    "episodes": 37
+  }
+}
+```
+
+Errors follow a standardized format:
+
+```json Error Response
+{
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "error": "Authentication required"
+}
+```
+
+## Interactive API Documentation
+
+TrackGeek provides interactive API documentation powered by Swagger/Scalar. Visit the docs to explore all endpoints:
+
+```
+http://localhost:40287/docs
+```
+
+<Info>
+  The interactive documentation is only available in development mode (`NODE_ENV=development`).
+</Info>
+
+## Common Response Codes
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| 200 | OK | Request succeeded |
+| 201 | Created | Resource created successfully |
+| 204 | No Content | Request succeeded with no response body |
+| 400 | Bad Request | Invalid request parameters |
+| 401 | Unauthorized | Authentication required |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Resource not found |
+| 422 | Unprocessable Entity | Validation failed |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error |
+
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card
+    title="Authentication"
+    icon="lock"
+    href="/authentication"
+  >
+    Learn about social providers, magic links, and bearer tokens
+  </Card>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api/anime"
+  >
+    Explore all available endpoints and their parameters
+  </Card>
+  <Card
+    title="Media Tracking"
+    icon="film"
+    href="/concepts/media-tracking"
+  >
+    Learn how to track anime, games, movies, and more
+  </Card>
+  <Card
+    title="Social Features"
+    icon="users"
+    href="/concepts/social-features"
+  >
+    Discover followers, comments, reactions, and feed events
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+<Warning>
+  Remember to never commit your `.env` file or expose your `BETTER_AUTH_SECRET` in public repositories.
+</Warning>

@@ -1,0 +1,529 @@
+---
+title: 'Lists'
+description: 'Manage custom lists and list items for organizing media collections'
+---
+
+## Overview
+
+The Lists API allows users to create custom collections of media items (anime, manga, TV shows, movies, games, and books). Each list has a specific type that determines which media items can be added to it.
+
+### List Types
+
+The `ListType` enum defines the types of media that can be organized in lists:
+
+- `Anime` - Anime series and films
+- `Manga` - Manga series and one-shots
+- `TVShow` - Television shows
+- `Movie` - Films
+- `Game` - Video games
+- `Book` - Books
+
+<Note>
+  A list can only contain items of its designated type. For example, an Anime list can only contain anime items.
+</Note>
+
+## Create List
+
+<CodeGroup>
+```bash POST /list
+curl -X POST https://api.trackgeek.com/list \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Favorite Anime",
+    "type": "Anime",
+    "description": "A collection of my all-time favorite anime series"
+  }'
+```
+</CodeGroup>
+
+Create a new custom list for organizing media items.
+
+### Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  The name of the list. Must be unique for the user.
+</ParamField>
+
+<ParamField body="type" type="ListType" required>
+  The type of media this list will contain. Must be one of: `Anime`, `Manga`, `TVShow`, `Movie`, `Game`, or `Book`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description of the list's purpose or contents.
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code: `201` on success
+</ResponseField>
+
+---
+
+## Get User Lists
+
+<CodeGroup>
+```bash GET /list/user/:userId
+curl -X GET "https://api.trackgeek.com/list/user/550e8400-e29b-41d4-a716-446655440000?page=1&itemsPerPage=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+Retrieve all lists created by a specific user with pagination support.
+
+### Path Parameters
+
+<ParamField path="userId" type="string" required>
+  UUID of the user whose lists to retrieve
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number for pagination (starts at 1)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="integer">
+  Number of items per page. Must be between 1 and 50.
+</ParamField>
+
+### Response
+
+<ResponseField name="lists" type="array">
+  Array of list objects
+  
+  <ResponseField name="id" type="string">
+    Unique identifier (UUID) of the list
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Name of the list
+  </ResponseField>
+  
+  <ResponseField name="description" type="string | null">
+    Description of the list
+  </ResponseField>
+  
+  <ResponseField name="type" type="ListType">
+    Type of media in this list (Anime, Manga, TVShow, Movie, Game, or Book)
+  </ResponseField>
+  
+  <ResponseField name="userId" type="string">
+    UUID of the user who owns this list
+  </ResponseField>
+  
+  <ResponseField name="createdAt" type="string">
+    ISO 8601 timestamp when the list was created
+  </ResponseField>
+  
+  <ResponseField name="updatedAt" type="string">
+    ISO 8601 timestamp when the list was last updated
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Get List by ID
+
+<CodeGroup>
+```bash GET /list/:listId
+curl -X GET "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+Retrieve a specific list by its ID.
+
+### Path Parameters
+
+<ParamField path="listId" type="string" required>
+  UUID of the list to retrieve
+</ParamField>
+
+### Response
+
+<ResponseField name="list" type="object">
+  The list object
+  
+  <ResponseField name="id" type="string">
+    Unique identifier (UUID) of the list
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Name of the list
+  </ResponseField>
+  
+  <ResponseField name="description" type="string | null">
+    Description of the list
+  </ResponseField>
+  
+  <ResponseField name="type" type="ListType">
+    Type of media in this list
+  </ResponseField>
+  
+  <ResponseField name="userId" type="string">
+    UUID of the user who owns this list
+  </ResponseField>
+  
+  <ResponseField name="createdAt" type="string">
+    ISO 8601 timestamp when the list was created
+  </ResponseField>
+  
+  <ResponseField name="updatedAt" type="string">
+    ISO 8601 timestamp when the list was last updated
+  </ResponseField>
+</ResponseField>
+
+---
+
+## Get List Items
+
+<CodeGroup>
+```bash GET /list/:listId/item
+curl -X GET "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item?page=1&itemsPerPage=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+</CodeGroup>
+
+Retrieve all items in a specific list with pagination support.
+
+### Path Parameters
+
+<ParamField path="listId" type="string" required>
+  UUID of the list whose items to retrieve
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number for pagination (starts at 1)
+</ParamField>
+
+<ParamField query="itemsPerPage" type="integer">
+  Number of items per page. Must be between 1 and 50.
+</ParamField>
+
+### Response
+
+<ResponseField name="listItems" type="array">
+  Array of list item objects
+  
+  <ResponseField name="id" type="string">
+    Unique identifier (UUID) of the list item
+  </ResponseField>
+  
+  <ResponseField name="listId" type="string">
+    UUID of the list this item belongs to
+  </ResponseField>
+  
+  <ResponseField name="animeId" type="string | null">
+    UUID of the anime (if type is Anime)
+  </ResponseField>
+  
+  <ResponseField name="mangaId" type="string | null">
+    UUID of the manga (if type is Manga)
+  </ResponseField>
+  
+  <ResponseField name="tvShowId" type="string | null">
+    UUID of the TV show (if type is TVShow)
+  </ResponseField>
+  
+  <ResponseField name="movieId" type="string | null">
+    UUID of the movie (if type is Movie)
+  </ResponseField>
+  
+  <ResponseField name="gameId" type="string | null">
+    UUID of the game (if type is Game)
+  </ResponseField>
+  
+  <ResponseField name="bookId" type="string | null">
+    UUID of the book (if type is Book)
+  </ResponseField>
+</ResponseField>
+
+<Note>
+  Only one of the media ID fields (animeId, mangaId, etc.) will be populated based on the list's type.
+</Note>
+
+---
+
+## Add Item to List
+
+<Tabs>
+  <Tab title="Anime">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Anime",
+        "item": {
+          "animeId": "750e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Manga">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Manga",
+        "item": {
+          "mangaId": "850e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="TV Show">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "TVShow",
+        "item": {
+          "tvShowId": "950e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Movie">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Movie",
+        "item": {
+          "movieId": "a50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Game">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Game",
+        "item": {
+          "gameId": "b50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Book">
+    <CodeGroup>
+    ```bash POST /list/:listId/item
+    curl -X POST "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Book",
+        "item": {
+          "bookId": "c50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+Add a media item to a list. The item type must match the list type.
+
+### Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication. Only the list owner can add items.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="listId" type="string" required>
+  UUID of the list to add the item to
+</ParamField>
+
+### Request Body
+
+<ParamField body="type" type="ListType" required>
+  Type of the media item being added. Must match the list's type.
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the media item's ID. The field name depends on the type:
+  - For `Anime`: `{ "animeId": "uuid" }`
+  - For `Manga`: `{ "mangaId": "uuid" }`
+  - For `TVShow`: `{ "tvShowId": "uuid" }`
+  - For `Movie`: `{ "movieId": "uuid" }`
+  - For `Game`: `{ "gameId": "uuid" }`
+  - For `Book`: `{ "bookId": "uuid" }`
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code: `200` on success
+</ResponseField>
+
+---
+
+## Remove Item from List
+
+<Tabs>
+  <Tab title="Anime">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Anime",
+        "item": {
+          "animeId": "750e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Manga">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Manga",
+        "item": {
+          "mangaId": "850e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="TV Show">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "TVShow",
+        "item": {
+          "tvShowId": "950e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Movie">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Movie",
+        "item": {
+          "movieId": "a50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Game">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Game",
+        "item": {
+          "gameId": "b50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Book">
+    <CodeGroup>
+    ```bash DELETE /list/:listId/item
+    curl -X DELETE "https://api.trackgeek.com/list/650e8400-e29b-41d4-a716-446655440000/item" \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "type": "Book",
+        "item": {
+          "bookId": "c50e8400-e29b-41d4-a716-446655440000"
+        }
+      }'
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+Remove a media item from a list.
+
+### Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token for authentication. Only the list owner can remove items.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="listId" type="string" required>
+  UUID of the list to remove the item from
+</ParamField>
+
+### Request Body
+
+<ParamField body="type" type="ListType" required>
+  Type of the media item being removed
+</ParamField>
+
+<ParamField body="item" type="object" required>
+  Object containing the media item's ID to remove. The field name depends on the type:
+  - For `Anime`: `{ "animeId": "uuid" }`
+  - For `Manga`: `{ "mangaId": "uuid" }`
+  - For `TVShow`: `{ "tvShowId": "uuid" }`
+  - For `Movie`: `{ "movieId": "uuid" }`
+  - For `Game`: `{ "gameId": "uuid" }`
+  - For `Book`: `{ "bookId": "uuid" }`
+</ParamField>
+
+### Response
+
+<ResponseField name="status" type="number">
+  HTTP status code: `204` on success (No Content)
+</ResponseField>

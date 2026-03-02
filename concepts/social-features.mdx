@@ -1,0 +1,733 @@
+---
+title: Social Features
+description: Discover TrackGeek's social ecosystem including followers, comments, reactions, and personalized activity feeds
+---
+
+## Overview
+
+TrackGeek provides a comprehensive social platform that enables users to connect, interact, and share their media experiences. The social system includes user relationships, contextual comments, emoji reactions, and activity feeds.
+
+## User Relationships
+
+### Following System
+
+TrackGeek uses a unidirectional following model where users can follow others without requiring mutual approval.
+
+**Following Model** (`prisma/schema.prisma:149-162`):
+```prisma
+model Following {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+```
+
+### Relationship Terminology
+
+<CardGroup cols={2}>
+  <Card title="Follower" icon="user-plus">
+    A user who follows another user. They see the followed user's activity in their feed.
+  </Card>
+  <Card title="Following" icon="users">
+    A user being followed. Their activity appears in their followers' feeds.
+  </Card>
+</CardGroup>
+
+### Unique Constraints
+
+The `@@unique([followerId, followingId])` constraint ensures:
+- No duplicate follow relationships
+- One follow record per user pair
+- Clean unfollowing (simple delete)
+
+### Indexing Strategy
+
+<Accordion title="Follower Index">
+  `@@index([followerId])` enables efficient queries:
+  - "Who is this user following?"
+  - "Get all users followed by X"
+  - Feed generation (find followed users' activity)
+</Accordion>
+
+<Accordion title="Following Index">
+  `@@index([followingId])` enables efficient queries:
+  - "Who follows this user?"
+  - "Get all followers of X"
+  - Follower count aggregation
+</Accordion>
+
+### User Model Relations
+
+**User Relationship Fields** (`prisma/schema.prisma:34-35`):
+```prisma
+followers  Following[] @relation("UserFollowers")
+following  Following[] @relation("UserFollowing")
+```
+
+This bidirectional relation allows querying from both perspectives:
+```typescript
+// Get users I follow
+const following = await prisma.user.findUnique({
+  where: { id: userId },
+  include: { following: true }
+});
+
+// Get my followers
+const followers = await prisma.user.findUnique({
+  where: { id: userId },
+  include: { followers: true }
+});
+```
+
+## Comment System
+
+### Comment Types
+
+Comments can be attached to any media type or user profile:
+
+**CommentType Enum** (`prisma/schema.prisma:164-172`):
+```prisma
+enum CommentType {
+  Anime
+  Manga
+  TVShow
+  Movie
+  Game
+  Book
+  Profile
+}
+```
+
+### Comment Model
+
+**Comment Schema** (`prisma/schema.prisma:174-206`):
+```prisma
+model Comment {
+  id        String      @id @default(uuid())
+  content   String
+  type      CommentType
+  userId    String
+  animeId   String?
+  mangaId   String?
+  tvShowId  String?
+  movieId   String?
+  gameId    String?
+  bookId    String?
+  profileId String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime     Anime?     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  manga     Manga?     @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  tvShow    TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  movie     Movie?     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  game      Game?      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  book      Book?      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  profile   Profile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  reactions Reaction[]
+
+  @@unique([userId, animeId])
+  @@unique([userId, mangaId])
+  @@unique([userId, tvShowId])
+  @@unique([userId, movieId])
+  @@unique([userId, gameId])
+  @@unique([userId, bookId])
+  @@unique([userId, profileId])
+}
+```
+
+### Polymorphic Association
+
+Comments use a polymorphic pattern with:
+- `type` field indicating the comment target
+- Optional foreign keys for each media type
+- Exactly one foreign key populated per comment
+
+<Info>
+  The multiple unique constraints ensure each user can only leave one comment per media item or profile.
+</Info>
+
+### Comment Creation
+
+**Example from CommentService** (`src/modules/comment/comment.service.ts:14-27`):
+```typescript
+async createComment(createCommentDto: CreateCommentDto) {
+  const { type, content, userId, item } = createCommentDto;
+
+  const entityId = { ...item } as Record<string, any>;
+
+  await this.databaseService.comment.create({
+    data: {
+      type,
+      content,
+      userId,
+      ...entityId,
+    },
+  });
+}
+```
+
+The `item` object contains the appropriate foreign key:
+```typescript
+// For anime comment
+{ animeId: "uuid" }
+
+// For profile comment
+{ profileId: "uuid" }
+```
+
+### Comment Retrieval
+
+**Example from CommentService** (`src/modules/comment/comment.service.ts:43-132`):
+```typescript
+async getComments(getCommentsDto: GetCommentsDto) {
+  const pagination = await this.databaseService.cursorPagination<CommentFindManyArgs>({
+    model: "comment",
+    where: {
+      type: getCommentsDto.type,
+      ...getCommentsDto.item,
+    },
+    cursor: getCommentsDto.cursor,
+    itemsPerPage: getCommentsDto.itemsPerPage,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profile: {
+            select: {
+              id: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+      anime: {
+        select: {
+          id: true,
+          malId: true,
+          title: true,
+          imageUrl: true,
+        },
+      },
+      manga: {
+        select: {
+          id: true,
+          malId: true,
+          title: true,
+          imageUrl: true,
+        },
+      },
+      tvShow: {
+        select: {
+          id: true,
+          tmdbId: true,
+          name: true,
+          posterUrl: true,
+        },
+      },
+      movie: {
+        select: {
+          id: true,
+          tmdbId: true,
+          title: true,
+          posterUrl: true,
+        },
+      },
+      game: {
+        select: {
+          id: true,
+          igdbId: true,
+          name: true,
+          coverUrl: true,
+        },
+      },
+      book: {
+        select: {
+          id: true,
+          hardcoverId: true,
+          title: true,
+          imageUrl: true,
+        },
+      },
+      reactions: {
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          emoji: true,
+          createdAt: true,
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return pagination;
+}
+```
+
+<Note>
+  Comments include reactions preview (first 3) for efficient rendering without additional queries.
+</Note>
+
+### Comment Deletion
+
+**Example from CommentService** (`src/modules/comment/comment.service.ts:29-41`):
+```typescript
+async deleteComment(deleteCommentDto: DeleteCommentDto) {
+  const comment = await this.databaseService.comment.findUnique({
+    where: { id: deleteCommentDto.commentId },
+  });
+
+  if (!comment || comment.userId !== deleteCommentDto.userId) {
+    throw new AppException(ERROR_CODES.COMMENT_NOT_FOUND);
+  }
+
+  await this.databaseService.comment.delete({
+    where: { id: comment.id },
+  });
+}
+```
+
+<Info>
+  Deletion requires user authorization - only comment authors can delete their comments.
+</Info>
+
+## Reaction System
+
+### Reaction Types
+
+Reactions can be added to comments or feed events:
+
+**ReactionType Enum** (`prisma/schema.prisma:208-211`):
+```prisma
+enum ReactionType {
+  Comment
+  FeedEvent
+}
+```
+
+### Reaction Model
+
+**Reaction Schema** (`prisma/schema.prisma:213-228`):
+```prisma
+model Reaction {
+  id          String       @id @default(uuid())
+  emoji       String
+  type        ReactionType
+  userId      String
+  commentId   String?
+  feedEventId String?
+  createdAt   DateTime     @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  feedEvent FeedEvent? @relation(fields: [feedEventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@unique([userId, feedEventId])
+}
+```
+
+### Emoji Reactions
+
+Reactions use emoji strings for flexible expression:
+
+```typescript
+emoji: "👍" | "❤️" | "😂" | "😮" | "😢" | "🔥" | ...
+```
+
+<Accordion title="Common Emoji Reactions">
+  - 👍 Like/Approve
+  - ❤️ Love
+  - 😂 Funny
+  - 😮 Surprised
+  - 😢 Sad
+  - 🔥 Fire/Awesome
+  - 🎉 Celebrate
+  - 👏 Applause
+  - 💯 Perfect
+  - 🤔 Thinking
+</Accordion>
+
+### Unique Constraints
+
+Reactions enforce one emoji per user per target:
+- `@@unique([userId, commentId])`: One reaction per user per comment
+- `@@unique([userId, feedEventId])`: One reaction per user per feed event
+
+<Note>
+  Users can change their reaction by deleting and creating a new one, but cannot have multiple reactions on the same target.
+</Note>
+
+### Reaction Creation
+
+**Example from ReactionService** (`src/modules/reaction/reaction.service.ts:14-27`):
+```typescript
+async createReaction(createReactionDto: CreateReactionDto) {
+  const { emoji, userId, item, type } = createReactionDto;
+
+  const entityId = { ...item } as Record<string, any>;
+
+  await this.databaseService.reaction.create({
+    data: {
+      type,
+      emoji,
+      userId,
+      ...entityId,
+    },
+  });
+}
+```
+
+### Reaction Retrieval
+
+**Example from ReactionService** (`src/modules/reaction/reaction.service.ts:43-72`):
+```typescript
+async getReactions(getReactionsDto: GetReactionsDto) {
+  const pagination = await this.databaseService.cursorPagination<ReactionFindManyArgs>({
+    model: "reaction",
+    where: {
+      type: getReactionsDto.type,
+      ...getReactionsDto.item,
+    },
+    cursor: getReactionsDto.cursor,
+    itemsPerPage: getReactionsDto.itemsPerPage,
+    include: {
+      comment: true,
+      feedEvent: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          profile: {
+            select: {
+              id: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return pagination;
+}
+```
+
+### Reaction Deletion
+
+**Example from ReactionService** (`src/modules/reaction/reaction.service.ts:29-41`):
+```typescript
+async deleteReaction(deleteReactionDto: DeleteReactionDto) {
+  const reaction = await this.databaseService.reaction.findUnique({
+    where: { id: deleteReactionDto.reactionId },
+  });
+
+  if (!reaction || reaction.userId !== deleteReactionDto.userId) {
+    throw new AppException(ERROR_CODES.REACTION_NOT_FOUND);
+  }
+
+  await this.databaseService.reaction.delete({
+    where: { id: reaction.id },
+  });
+}
+```
+
+### Reaction Aggregation
+
+Reactions can be grouped by emoji for display:
+
+```typescript
+// Example aggregation
+{
+  "👍": { count: 15, users: ["user1", "user2", ...] },
+  "❤️": { count: 8, users: ["user3", "user4", ...] },
+  "😂": { count: 3, users: ["user5"] }
+}
+```
+
+## Feed System
+
+### Feed Event Types
+
+Feed events track various user activities:
+
+**FeedEventType Enum** (`prisma/schema.prisma:230-238`):
+```prisma
+enum FeedEventType {
+  NewFollower
+  NewFavorite
+  NewList
+  NewListItem
+  NewReview
+  NewWatch
+  NewProgress
+}
+```
+
+<Tabs>
+  <Tab title="Social Events">
+    - **NewFollower**: User gained a new follower
+    - **NewFavorite**: User marked media as favorite
+  </Tab>
+  
+  <Tab title="Content Events">
+    - **NewList**: User created a new list
+    - **NewListItem**: User added item to a list
+    - **NewReview**: User posted a review
+  </Tab>
+  
+  <Tab title="Progress Events">
+    - **NewWatch**: User started watching (legacy)
+    - **NewProgress**: User updated progress status
+  </Tab>
+</Tabs>
+
+### Feed Event Model
+
+**FeedEvent Schema** (`prisma/schema.prisma:240-251`):
+```prisma
+model FeedEvent {
+  id        String        @id @default(uuid())
+  type      FeedEventType
+  userId    String
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions Reaction[]
+
+  @@index([userId, createdAt])
+}
+```
+
+### Metadata Field
+
+The `metadata` JSON field stores event-specific data:
+
+<Accordion title="NewReview Metadata">
+  ```json
+  {
+    "animeReview": {
+      "id": "uuid",
+      "overall": 8.5,
+      "summary": "Great anime!",
+      "anime": {
+        "id": "uuid",
+        "title": "Attack on Titan",
+        "imageUrl": "https://..."
+      },
+      "user": {
+        "id": "uuid",
+        "name": "John Doe",
+        "username": "johndoe"
+      }
+    }
+  }
+  ```
+</Accordion>
+
+<Accordion title="NewProgress Metadata">
+  ```json
+  {
+    "progress": {
+      "id": "uuid",
+      "status": "Watching",
+      "anime": {
+        "id": "uuid",
+        "title": "Demon Slayer",
+        "imageUrl": "https://..."
+      }
+    }
+  }
+  ```
+</Accordion>
+
+<Accordion title="NewFollower Metadata">
+  ```json
+  {
+    "follower": {
+      "id": "uuid",
+      "name": "Jane Smith",
+      "username": "janesmith",
+      "profile": {
+        "avatarUrl": "https://..."
+      }
+    }
+  }
+  ```
+</Accordion>
+
+### Feed Event Creation
+
+**Example from FeedEventService** (`src/modules/feed-event/feed-event.service.ts:14-24`):
+```typescript
+async createFeedEvent(feedEventDto: FeedEventDto) {
+  const { type, userId, metadata } = feedEventDto;
+
+  await this.databaseService.feedEvent.create({
+    data: {
+      type,
+      userId,
+      metadata,
+    },
+  });
+}
+```
+
+<Info>
+  Feed events are typically created asynchronously via a queue system to avoid blocking user operations.
+</Info>
+
+### Personalized Feed Generation
+
+**Example from FeedEventService** (`src/modules/feed-event/feed-event.service.ts:26-76`):
+```typescript
+async getFeedEventsByUserId(getFeedEventsByUserIdDto: GetFeedEventsByUserDto) {
+  const userExists = await this.databaseService.user.findUnique({
+    where: { id: getFeedEventsByUserIdDto.userId },
+  });
+
+  if (!userExists) {
+    throw new AppException(ERROR_CODES.USER_NOT_FOUND);
+  }
+
+  const following = await this.databaseService.following.findMany({
+    where: { followerId: getFeedEventsByUserIdDto.userId },
+    select: { followingId: true },
+  });
+
+  const friendIds = following.map((item) => item.followingId);
+
+  const pagination = await this.databaseService.cursorPagination<FeedEventFindManyArgs>({
+    model: "feedEvent",
+    cursor: getFeedEventsByUserIdDto.cursor,
+    itemsPerPage: getFeedEventsByUserIdDto.itemsPerPage,
+    where: {
+      userId: {
+        in: [...friendIds, getFeedEventsByUserIdDto.userId],
+      },
+    },
+    include: {
+      _count: {
+        select: {
+          reactions: true,
+        },
+      },
+      reactions: {
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          emoji: true,
+          createdAt: true,
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return pagination;
+}
+```
+
+### Feed Algorithm
+
+1. **Get Following List**: Query users the current user follows
+2. **Include Self**: Add current user's ID to include their own activity
+3. **Filter Events**: Get feed events where `userId IN (following + self)`
+4. **Sort by Time**: Order by `createdAt` descending (newest first)
+5. **Include Reactions**: Preload reaction counts and preview
+6. **Paginate**: Return cursor-based pagination
+
+### Feed Indexing
+
+**Composite Index** (`prisma/schema.prisma:250`):
+```prisma
+@@index([userId, createdAt])
+```
+
+This composite index optimizes:
+- Filtering by user ID
+- Sorting by creation time
+- Range queries (get events after timestamp)
+
+## Social Analytics
+
+The social system enables rich analytics:
+
+<CardGroup cols={3}>
+  <Card title="Follower Count" icon="users">
+    Total followers per user
+  </Card>
+  <Card title="Following Count" icon="user-plus">
+    Total users followed
+  </Card>
+  <Card title="Comment Count" icon="comments">
+    Total comments per media/user
+  </Card>
+  <Card title="Reaction Count" icon="heart">
+    Total reactions per comment/event
+  </Card>
+  <Card title="Engagement Rate" icon="chart-line">
+    Reactions + comments per feed event
+  </Card>
+  <Card title="Popular Content" icon="fire">
+    Media with most comments/reactions
+  </Card>
+  <Card title="Active Users" icon="bolt">
+    Users with most feed events
+  </Card>
+  <Card title="Network Size" icon="project-diagram">
+    Follower + following counts
+  </Card>
+  <Card title="Feed Activity" icon="rss">
+    Events per day/week/month
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Cascade Deletes" icon="trash">
+    All social relationships cascade delete when users are removed
+  </Card>
+  <Card title="Authorization" icon="shield">
+    Always verify user ownership before deletion
+  </Card>
+  <Card title="Pagination" icon="list">
+    Use cursor-based pagination for feeds and comments
+  </Card>
+  <Card title="Reaction Preview" icon="eye">
+    Include reaction previews to reduce client queries
+  </Card>
+  <Card title="Async Events" icon="clock">
+    Create feed events asynchronously via queue
+  </Card>
+  <Card title="Index Optimization" icon="database">
+    Leverage composite indexes for feed queries
+  </Card>
+</CardGroup>

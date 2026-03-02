@@ -1,0 +1,445 @@
+---
+title: 'Games'
+description: 'Search, retrieve, and refresh game information from IGDB'
+---
+
+## Search Games
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Search for games by title or keywords.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/game/search?query=witcher" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/game/search?query=witcher', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.trackgeek.com/game/search',
+    params={'query': 'witcher'},
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="query" type="string" required>
+  Search query string. Must be at least 3 characters long.
+</ParamField>
+
+### Response
+
+<ResponseField name="games" type="array">
+  Array of game objects matching the search query.
+  
+  <Expandable title="game object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="igdbId" type="number">
+      IGDB (Internet Game Database) ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Game name
+    </ResponseField>
+    
+    <ResponseField name="slug" type="string">
+      URL-friendly slug
+    </ResponseField>
+    
+    <ResponseField name="coverUrl" type="string">
+      Cover image URL
+    </ResponseField>
+    
+    <ResponseField name="summary" type="string">
+      Game summary/description
+    </ResponseField>
+    
+    <ResponseField name="firstReleaseDate" type="string">
+      First release date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="platforms" type="array">
+      Array of platform objects
+    </ResponseField>
+    
+    <ResponseField name="rating" type="number">
+      User rating (0-100)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "games": [
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440004",
+      "igdbId": 1942,
+      "name": "The Witcher 3: Wild Hunt",
+      "slug": "the-witcher-3-wild-hunt",
+      "coverUrl": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg",
+      "summary": "The Witcher 3: Wild Hunt is an action role-playing game...",
+      "firstReleaseDate": "2015-05-19T00:00:00.000Z",
+      "genres": [
+        { "id": 12, "name": "Role-playing (RPG)" },
+        { "id": 31, "name": "Adventure" }
+      ],
+      "platforms": [
+        { "id": 6, "name": "PC (Microsoft Windows)" },
+        { "id": 48, "name": "PlayStation 4" },
+        { "id": 49, "name": "Xbox One" }
+      ],
+      "rating": 94.2
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+---
+
+## Get Game Details
+
+<Note>
+  This endpoint does not require authentication.
+</Note>
+
+Retrieve detailed information about a specific game by its ID.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.trackgeek.com/game/details/1942" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const gameId = 1942;
+const response = await fetch(`https://api.trackgeek.com/game/details/${gameId}`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+game_id = 1942
+response = requests.get(
+    f'https://api.trackgeek.com/game/details/{game_id}',
+    headers={'Content-Type': 'application/json'}
+)
+
+data = response.json()
+```
+
+</CodeGroup>
+
+### Path Parameters
+
+<ParamField path="gameId" type="integer" required>
+  The unique game identifier. Must be a valid integer.
+</ParamField>
+
+### Response
+
+<ResponseField name="game" type="object">
+  Detailed game information.
+  
+  <Expandable title="game object">
+    <ResponseField name="id" type="string">
+      Unique identifier (UUID)
+    </ResponseField>
+    
+    <ResponseField name="igdbId" type="number">
+      IGDB (Internet Game Database) ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Game name
+    </ResponseField>
+    
+    <ResponseField name="slug" type="string">
+      URL-friendly slug
+    </ResponseField>
+    
+    <ResponseField name="coverUrl" type="string">
+      Cover image URL
+    </ResponseField>
+    
+    <ResponseField name="summary" type="string">
+      Game summary/description
+    </ResponseField>
+    
+    <ResponseField name="storyline" type="object">
+      Detailed storyline information
+    </ResponseField>
+    
+    <ResponseField name="firstReleaseDate" type="string">
+      First release date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre objects
+    </ResponseField>
+    
+    <ResponseField name="platforms" type="array">
+      Array of platform objects
+    </ResponseField>
+    
+    <ResponseField name="gameModes" type="array">
+      Array of game mode objects (Single player, Multiplayer, Co-op, etc.)
+    </ResponseField>
+    
+    <ResponseField name="playerPerspectives" type="array">
+      Array of player perspective objects (First person, Third person, etc.)
+    </ResponseField>
+    
+    <ResponseField name="themes" type="array">
+      Array of theme objects
+    </ResponseField>
+    
+    <ResponseField name="gameEngines" type="array">
+      Array of game engine objects
+    </ResponseField>
+    
+    <ResponseField name="involvedCompanies" type="array">
+      Array of company objects with developer/publisher roles
+    </ResponseField>
+    
+    <ResponseField name="rating" type="number">
+      User rating (0-100)
+    </ResponseField>
+    
+    <ResponseField name="ratingCount" type="number">
+      Number of user ratings
+    </ResponseField>
+    
+    <ResponseField name="aggregatedRating" type="number">
+      Aggregated critic rating (0-100)
+    </ResponseField>
+    
+    <ResponseField name="aggregatedRatingCount" type="number">
+      Number of critic ratings
+    </ResponseField>
+    
+    <ResponseField name="totalRating" type="number">
+      Combined user and critic rating
+    </ResponseField>
+    
+    <ResponseField name="totalRatingCount" type="number">
+      Combined rating count
+    </ResponseField>
+    
+    <ResponseField name="screenshots" type="array">
+      Array of screenshot objects
+    </ResponseField>
+    
+    <ResponseField name="artworks" type="array">
+      Array of artwork objects
+    </ResponseField>
+    
+    <ResponseField name="videos" type="array">
+      Array of video objects (trailers, gameplay, etc.)
+    </ResponseField>
+    
+    <ResponseField name="releaseDates" type="array">
+      Array of release date objects per platform
+    </ResponseField>
+    
+    <ResponseField name="similarGames" type="array">
+      Array of similar game references
+    </ResponseField>
+    
+    <ResponseField name="dlcs" type="array">
+      Array of DLC references
+    </ResponseField>
+    
+    <ResponseField name="expansions" type="array">
+      Array of expansion references
+    </ResponseField>
+    
+    <ResponseField name="bundles" type="array">
+      Array of bundle references
+    </ResponseField>
+    
+    <ResponseField name="remakes" type="array">
+      Array of remake references
+    </ResponseField>
+    
+    <ResponseField name="remasters" type="array">
+      Array of remaster references
+    </ResponseField>
+    
+    <ResponseField name="ageRatings" type="array">
+      Array of age rating objects (ESRB, PEGI, etc.)
+    </ResponseField>
+    
+    <ResponseField name="gameStatus" type="object">
+      Game status (Released, Alpha, Beta, Early Access, etc.)
+    </ResponseField>
+    
+    <ResponseField name="gameType" type="object">
+      Game type (Main game, DLC, Expansion, etc.)
+    </ResponseField>
+    
+    <ResponseField name="hypes" type="number">
+      Number of user hypes/follows
+    </ResponseField>
+    
+    <ResponseField name="lastRefreshedAt" type="string">
+      ISO 8601 timestamp of last data refresh
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+
+```json Response
+{
+  "game": {
+    "id": "990e8400-e29b-41d4-a716-446655440004",
+    "igdbId": 1942,
+    "name": "The Witcher 3: Wild Hunt",
+    "slug": "the-witcher-3-wild-hunt",
+    "coverUrl": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg",
+    "summary": "The Witcher 3: Wild Hunt is an action role-playing game...",
+    "firstReleaseDate": "2015-05-19T00:00:00.000Z",
+    "genres": [
+      { "id": 12, "name": "Role-playing (RPG)" },
+      { "id": 31, "name": "Adventure" }
+    ],
+    "platforms": [
+      { "id": 6, "name": "PC (Microsoft Windows)" },
+      { "id": 48, "name": "PlayStation 4" },
+      { "id": 49, "name": "Xbox One" },
+      { "id": 130, "name": "Nintendo Switch" }
+    ],
+    "gameModes": [
+      { "id": 1, "name": "Single player" }
+    ],
+    "involvedCompanies": [
+      { "company": { "id": 908, "name": "CD Projekt RED" }, "developer": true, "publisher": false }
+    ],
+    "rating": 94.2,
+    "ratingCount": 5678,
+    "aggregatedRating": 92.5,
+    "aggregatedRatingCount": 156,
+    "lastRefreshedAt": "2026-03-02T10:00:00.000Z",
+    "createdAt": "2026-01-15T08:30:00.000Z",
+    "updatedAt": "2026-03-02T10:00:00.000Z"
+  }
+}
+```
+
+</ResponseExample>
+
+---
+
+## Refresh Game
+
+<Note>
+  This endpoint requires authentication. Include your API token in the Authorization header.
+</Note>
+
+Refresh game data from IGDB to get the latest information.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.trackgeek.com/game/refresh" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 1942
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.trackgeek.com/game/refresh', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: 1942
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.trackgeek.com/game/refresh',
+    headers={
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={'id': 1942}
+)
+```
+
+</CodeGroup>
+
+### Request Body
+
+<ParamField body="id" type="integer" required>
+  The IGDB ID of the game to refresh. Must be a valid integer.
+</ParamField>
+
+### Response
+
+Returns HTTP 200 on successful refresh with no body content.
+
+<ResponseExample>
+
+```json Success Response
+{}
+```
+
+</ResponseExample>
