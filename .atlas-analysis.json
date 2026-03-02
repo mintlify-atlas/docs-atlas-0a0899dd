@@ -1,0 +1,119 @@
+{
+  "projectType": "api-service",
+  "projectName": "TrackGeek API",
+  "projectDescription": "API for a unified media tracking platform with progress tracking, statistics, and social features.",
+  "theme": "palm",
+  "primaryColor": "#8b5cf6",
+  "lightColor": "#a78bfa",
+  "darkColor": "#7c3aed",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["introduction", "quickstart", "authentication"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/media-tracking",
+              "concepts/progress-system",
+              "concepts/reviews",
+              "concepts/social-features"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/rate-limiting",
+              "guides/error-handling",
+              "guides/pagination",
+              "guides/caching"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Media",
+            "pages": [
+              "api/anime",
+              "api/manga",
+              "api/movies",
+              "api/tv-shows",
+              "api/games",
+              "api/books"
+            ]
+          },
+          {
+            "group": "Progress & Tracking",
+            "pages": [
+              "api/progress",
+              "api/reviews"
+            ]
+          },
+          {
+            "group": "Social",
+            "pages": [
+              "api/users",
+              "api/profiles",
+              "api/comments",
+              "api/reactions",
+              "api/feed-events"
+            ]
+          },
+          {
+            "group": "Collections",
+            "pages": [
+              "api/lists",
+              "api/favorites"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Track games, anime, movies, TV shows, books, and manga",
+    "Advanced progress tracking with status management",
+    "Comprehensive review system with custom ratings",
+    "Social features with followers, comments, and reactions",
+    "Custom lists and favorites",
+    "Feed events for activity tracking",
+    "OAuth authentication with multiple providers",
+    "Rate limiting and caching for performance"
+  ],
+  "publicApiSurface": [
+    "GET /anime/search",
+    "GET /anime/details/:animeId",
+    "POST /anime/refresh",
+    "GET /manga/search",
+    "GET /manga/details/:mangaId",
+    "GET /movie/search",
+    "GET /movie/details/:movieId",
+    "GET /tv-show/search",
+    "GET /tv-show/details/:tvShowId",
+    "GET /game/search",
+    "GET /game/details/:gameId",
+    "GET /book/search",
+    "GET /book/details/:bookId",
+    "POST /anime-review",
+    "PUT /anime-review/:id",
+    "DELETE /anime-review/:id",
+    "GET /user/:username",
+    "GET /profile/:username",
+    "PUT /profile",
+    "POST /comment",
+    "GET /comment",
+    "POST /reaction",
+    "GET /feed-event",
+    "POST /list",
+    "GET /list",
+    "POST /favorite",
+    "GET /favorite"
+  ]
+}
