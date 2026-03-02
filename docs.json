@@ -62,9 +62,8 @@
             ]
           },
           {
-            "group": "Progress & Tracking",
+            "group": "Reviews",
             "pages": [
-              "api/progress",
               "api/reviews"
             ]
           },
